@@ -1,11 +1,21 @@
-import React from 'react';
+import { useState } from 'react';
+import Login from './Login';
+import Upload from './Upload';
+import Matches from './Matches';
 
 function App() {
+  const [currentPage, setCurrentPage] = useState('login');
+
+  const handleNavigate = (page) => {
+    setCurrentPage(page);
+  };
+
   return (
-    <div className="App">
-      <h1>Sock Matcher</h1>
-      <p>Coming soon...</p>
-    </div>
+    <>
+      {currentPage === 'login' && <Login onNavigate={handleNavigate} />}
+      {currentPage === 'upload' && <Upload onNavigate={handleNavigate} />}
+      {currentPage === 'matches' && <Matches onNavigate={handleNavigate} />}
+    </>
   );
 }
 
