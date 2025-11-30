@@ -1,7 +1,7 @@
 {
   "name": "sock-matcher-frontend",
   "version": "1.0.0",
-  "description": "Frontend UI for Sock Matcher application",
+  "description": "Frontend UI for Sole Mate application",
   "private": true,
   "type": "module",
   "scripts": {

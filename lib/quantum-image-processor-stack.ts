@@ -7,15 +7,20 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import * as events from 'aws-cdk-lib/aws-events';
-import * as targets from 'aws-cdk-lib/aws-events-targets';
+import * as eventsTargets from 'aws-cdk-lib/aws-events-targets';
 import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import { Construct } from 'constructs';
 import * as path from 'path';
 
 export interface QuantumImageProcessorStackProps extends cdk.StackProps {
   cognitoUserPoolArn?: string;
+  domainName?: string;
+  hostedZoneId?: string;
 }
 
 export class QuantumImageProcessorStack extends cdk.Stack {
@@ -36,9 +41,10 @@ export class QuantumImageProcessorStack extends cdk.Stack {
       }],
       eventBridgeEnabled: true,
       cors: [{
-        allowedMethods: [s3.HttpMethods.PUT],
-        allowedOrigins: ['*'],
+        allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.PUT, s3.HttpMethods.POST],
+        allowedOrigins: ['https://solemate.cloud', 'https://www.solemate.cloud'],
         allowedHeaders: ['*'],
+        exposedHeaders: ['ETag'],
       }],
     });
 
@@ -145,7 +151,7 @@ export class QuantumImageProcessorStack extends cdk.Stack {
     uploadBucket.grantReadWrite(archiveLambda);
     uploadBucket.grantPut(getUploadUrlLambda);
     archiveBucket.grantWrite(archiveLambda);
-    
+
     [validateLambda, metadataLambda, resizeLambda, thumbnailLambda, archiveLambda].forEach(fn => {
       this.metadataTable.grantReadWriteData(fn);
     });
@@ -235,15 +241,24 @@ export class QuantumImageProcessorStack extends cdk.Stack {
         detailType: ['Object Created'],
         detail: { bucket: { name: [uploadBucket.bucketName] } },
       },
-      targets: [new targets.SqsQueue(processingQueue)],
+      targets: [new eventsTargets.SqsQueue(processingQueue)],
     });
 
-    // API Gateway
+    // API Gateway with CORS configured for solemate.cloud
     const api = new apigateway.RestApi(this, 'ImageProcessorApi', {
       restApiName: 'Quantum Image Processor API',
       defaultCorsPreflightOptions: {
-        allowOrigins: apigateway.Cors.ALL_ORIGINS,
-        allowMethods: apigateway.Cors.ALL_METHODS,
+        allowOrigins: ['https://solemate.cloud', 'https://www.solemate.cloud'],
+        allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowHeaders: [
+          'Content-Type',
+          'X-Amz-Date',
+          'Authorization',
+          'X-Api-Key',
+          'X-Amz-Security-Token',
+          'X-Amz-User-Agent',
+        ],
+        allowCredentials: true,
       },
     });
 
@@ -265,11 +280,60 @@ export class QuantumImageProcessorStack extends cdk.Stack {
       authorizationType: authorizer ? apigateway.AuthorizationType.COGNITO : apigateway.AuthorizationType.NONE,
     });
 
+    // Custom domain for API Gateway (if domain info provided)
+    let apiDomainName: string | undefined;
+    if (props?.domainName && props?.hostedZoneId) {
+      const apiSubdomain = `api.${props.domainName}`;
+
+      // Import hosted zone
+      const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'ApiHostedZone', {
+        hostedZoneId: props.hostedZoneId,
+        zoneName: props.domainName,
+      });
+
+      // Import existing certificate for API Gateway (us-west-2)
+      const apiCertificate = acm.Certificate.fromCertificateArn(
+        this,
+        'ApiCertificate',
+        `arn:aws:acm:us-west-2:${this.account}:certificate/610e7be7-9b93-4a64-b675-31a3924f763e`
+      );
+
+      // Create custom domain for API Gateway
+      const customDomain = new apigateway.DomainName(this, 'ApiCustomDomain', {
+        domainName: apiSubdomain,
+        certificate: apiCertificate,
+        endpointType: apigateway.EndpointType.REGIONAL,
+      });
+
+      // Map API to custom domain
+      customDomain.addBasePathMapping(api, {
+        basePath: '',
+      });
+
+      // Create Route53 A record for API
+      new route53.ARecord(this, 'ApiARecord', {
+        zone: hostedZone,
+        recordName: 'api',
+        target: route53.RecordTarget.fromAlias(
+          new route53Targets.ApiGatewayDomain(customDomain)
+        ),
+      });
+
+      apiDomainName = `https://${apiSubdomain}`;
+    }
+
     // Outputs
     new cdk.CfnOutput(this, 'UploadBucketName', { value: uploadBucket.bucketName });
     new cdk.CfnOutput(this, 'ArchiveBucketName', { value: archiveBucket.bucketName });
     new cdk.CfnOutput(this, 'MetadataTableName', { value: this.metadataTable.tableName });
     new cdk.CfnOutput(this, 'StateMachineArn', { value: stateMachine.stateMachineArn });
     new cdk.CfnOutput(this, 'ApiUrl', { value: api.url });
+
+    if (apiDomainName) {
+      new cdk.CfnOutput(this, 'ApiCustomDomainUrl', {
+        value: apiDomainName,
+        description: 'API Gateway Custom Domain URL',
+      });
+    }
   }
 }

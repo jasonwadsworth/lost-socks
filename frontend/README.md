@@ -1,6 +1,6 @@
-# Sock Matcher Frontend
+# Sole Mate Frontend
 
-Frontend UI for the Sock Matcher application.
+Frontend UI for the Sole Mate application.
 
 ## Setup
 
@@ -11,6 +11,7 @@ npm install
 ## Running
 
 Development server:
+
 ```bash
 npm run dev
 ```

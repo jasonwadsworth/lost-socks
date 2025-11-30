@@ -11,10 +11,12 @@ new MainStack(app, 'MainStack');
 new QuantumImageProcessorStack(app, 'QuantumImageProcessorStack', {
   env: { region: 'us-west-2' },
   cognitoUserPoolArn: 'arn:aws:cognito-idp:us-west-2:831926593673:userpool/us-west-2_R5d1sC0Tn',
+  domainName: 'solemate.cloud',
+  hostedZoneId: 'Z00212753QAU2AHE2CTFX',
 });
 new AIPasswordValidatorStack(app, 'AIPasswordValidatorStack', {});
 new SockMatcherAgentsStack(app, 'SockMatcherAgentsStack', {
-  env: { 
+  env: {
     account: process.env.CDK_DEFAULT_ACCOUNT || process.env.AWS_ACCOUNT_ID,
     region: 'us-west-2',
   },
