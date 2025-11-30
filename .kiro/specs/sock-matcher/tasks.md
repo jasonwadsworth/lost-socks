@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. Set up project structure and dependencies
+- [x] 1. Set up project structure and dependencies
   - Create backend directory with Node.js/Express setup
   - Create frontend directory with React setup
   - Install dependencies: express, uuid for backend; react, react-dom for frontend
