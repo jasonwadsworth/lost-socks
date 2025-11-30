@@ -62,10 +62,10 @@ function Matches({ onNavigate }) {
         </button>
 
         <h1 className="matches-title">
-          Your Sock Matches! 💕
+          Your Sole Mates! 💕
         </h1>
         <p className="matches-subtitle">
-          We found {matches.length} potential soulmates for your lonely sock
+          We found {matches.length} potential matches for your lonely sock
         </p>
 
         <div className="matches-grid">

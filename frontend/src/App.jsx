@@ -1,14 +1,24 @@
 import { useState } from 'react';
+import IntroAnimation from './IntroAnimation';
 import Login from './Login';
 import Upload from './Upload';
 import Matches from './Matches';
 
 function App() {
+  const [showIntro, setShowIntro] = useState(true);
   const [currentPage, setCurrentPage] = useState('login');
 
   const handleNavigate = (page) => {
     setCurrentPage(page);
   };
+
+  const handleIntroComplete = () => {
+    setShowIntro(false);
+  };
+
+  if (showIntro) {
+    return <IntroAnimation onComplete={handleIntroComplete} />;
+  }
 
   return (
     <>
