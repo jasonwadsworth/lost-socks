@@ -1,0 +1,154 @@
+.agent-tracker {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 20px 0;
+  color: white;
+}
+
+.tracker-title {
+  text-align: center;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.progress-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d4ff, #7c3aed, #f472b6);
+  border-radius: 6px;
+  transition: width 0.5s ease;
+}
+
+.progress-text {
+  font-weight: bold;
+  min-width: 50px;
+  text-align: right;
+}
+
+.agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.agent-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.agent-card.pending {
+  opacity: 0.5;
+}
+
+.agent-card.active {
+  border-color: #00d4ff;
+  background: rgba(0, 212, 255, 0.1);
+  animation: glow 1.5s infinite;
+}
+
+.agent-card.complete {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(0, 212, 255, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.8); }
+}
+
+.agent-emoji {
+  font-size: 2rem;
+}
+
+.agent-info {
+  flex: 1;
+}
+
+.agent-name {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.agent-role {
+  font-size: 0.8rem;
+  color: #a0aec0;
+}
+
+.agent-description {
+  font-size: 0.7rem;
+  color: #718096;
+  font-style: italic;
+}
+
+.agent-status-indicator {
+  font-size: 1.5rem;
+}
+
+.thinking {
+  animation: bounce 0.5s infinite;
+  display: inline-block;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.time-remaining {
+  text-align: center;
+  color: #a0aec0;
+  margin-bottom: 16px;
+}
+
+.complete-message {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #10b981;
+  padding: 16px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.cost-tracker {
+  text-align: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.cost-note {
+  display: block;
+  font-size: 0.7rem;
+  color: #718096;
+  margin-top: 4px;
+}
