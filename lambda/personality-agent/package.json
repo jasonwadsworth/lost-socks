@@ -1,0 +1,11 @@
+{
+  "name": "sock-matcher-personality-agent",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Personality Analyzer Agent - Sock Psychologist",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.0.0",
+    "@aws-sdk/client-eventbridge": "^3.0.0"
+  }
+}
