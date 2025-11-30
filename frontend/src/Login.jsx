@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import './Login.css';
 
-function Login() {
+function Login({ onNavigate }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
@@ -14,8 +14,8 @@ function Login() {
       return;
     }
 
-    console.log('Login attempt:', { email, remember });
-    // TODO: Connect to backend API
+    // Navigate to upload page after "login"
+    onNavigate('upload');
   };
 
   return (
