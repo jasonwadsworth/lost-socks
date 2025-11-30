@@ -9,6 +9,8 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as bedrock from "aws-cdk-lib/aws-bedrock";
 import * as s3 from "aws-cdk-lib/aws-s3";
+import * as apigatewayv2 from "aws-cdk-lib/aws-apigatewayv2";
+import * as apigatewayv2_integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { Construct } from "constructs";
 import * as path from "path";
 import {
@@ -382,8 +384,157 @@ Your verdicts should reference philosophical frameworks (existentialism, utilita
     });
 
     // ============================================================
+    // API GATEWAY WEBSOCKET - Real-time agent updates
+    // ============================================================
+
+    // DynamoDB table for WebSocket connections
+    const connectionsTable = new dynamodb.Table(this, "WebSocketConnectionsTable", {
+      tableName: "sock-matcher-ws-connections",
+      partitionKey: { name: "connectionId", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      timeToLiveAttribute: "ttl",
+    });
+
+    connectionsTable.addGlobalSecondaryIndex({
+      indexName: "SockIdIndex",
+      partitionKey: { name: "sockId", type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
+    // WebSocket Lambda handlers
+    const wsConnectFn = new lambda.Function(this, "WebSocketConnectFunction", {
+      functionName: "sock-matcher-ws-connect",
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: "index.handler",
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda/websocket-connect")),
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        CONNECTIONS_TABLE: connectionsTable.tableName,
+      },
+    });
+
+    const wsDisconnectFn = new lambda.Function(this, "WebSocketDisconnectFunction", {
+      functionName: "sock-matcher-ws-disconnect",
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: "index.handler",
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda/websocket-disconnect")),
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        CONNECTIONS_TABLE: connectionsTable.tableName,
+      },
+    });
+
+    const wsSubscribeFn = new lambda.Function(this, "WebSocketSubscribeFunction", {
+      functionName: "sock-matcher-ws-subscribe",
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: "index.handler",
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda/websocket-subscribe")),
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        CONNECTIONS_TABLE: connectionsTable.tableName,
+      },
+    });
+
+    // Grant DynamoDB permissions
+    connectionsTable.grantReadWriteData(wsConnectFn);
+    connectionsTable.grantReadWriteData(wsDisconnectFn);
+    connectionsTable.grantReadWriteData(wsSubscribeFn);
+
+    // Create WebSocket API
+    const webSocketApi = new apigatewayv2.WebSocketApi(this, "SockMatcherWebSocketApi", {
+      apiName: "sock-matcher-websocket",
+      description: "WebSocket API for real-time sock matching agent updates",
+      connectRouteOptions: {
+        integration: new apigatewayv2_integrations.WebSocketLambdaIntegration(
+          "ConnectIntegration",
+          wsConnectFn
+        ),
+      },
+      disconnectRouteOptions: {
+        integration: new apigatewayv2_integrations.WebSocketLambdaIntegration(
+          "DisconnectIntegration",
+          wsDisconnectFn
+        ),
+      },
+      defaultRouteOptions: {
+        integration: new apigatewayv2_integrations.WebSocketLambdaIntegration(
+          "DefaultIntegration",
+          wsSubscribeFn
+        ),
+      },
+    });
+
+    // Add subscribe route
+    webSocketApi.addRoute("subscribe", {
+      integration: new apigatewayv2_integrations.WebSocketLambdaIntegration(
+        "SubscribeIntegration",
+        wsSubscribeFn
+      ),
+    });
+
+    // Deploy WebSocket API
+    const webSocketStage = new apigatewayv2.WebSocketStage(this, "WebSocketStage", {
+      webSocketApi,
+      stageName: "prod",
+      autoDeploy: true,
+    });
+
+    // Broadcast Lambda (triggered by EventBridge)
+    const wsBroadcastFn = new lambda.Function(this, "WebSocketBroadcastFunction", {
+      functionName: "sock-matcher-ws-broadcast",
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: "index.handler",
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda/websocket-broadcast")),
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 256,
+      environment: {
+        CONNECTIONS_TABLE: connectionsTable.tableName,
+        WEBSOCKET_ENDPOINT: `https://${webSocketApi.apiId}.execute-api.${this.region}.amazonaws.com/${webSocketStage.stageName}`,
+      },
+    });
+
+    connectionsTable.grantReadWriteData(wsBroadcastFn);
+
+    // Grant permission to post to WebSocket connections
+    wsBroadcastFn.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ["execute-api:ManageConnections"],
+      resources: [
+        `arn:aws:execute-api:${this.region}:${this.account}:${webSocketApi.apiId}/${webSocketStage.stageName}/POST/@connections/*`,
+      ],
+    }));
+
+    // EventBridge rule to trigger WebSocket broadcast
+    new events.Rule(this, "AgentEventsWebSocketRule", {
+      eventBus: this.eventBus,
+      ruleName: "agent-events-to-websocket",
+      eventPattern: {
+        detailType: [
+          "AgentStarted", "AgentProgress", "AgentCompleted",
+          "ColorAgentStarted", "ColorAgentCompleted",
+          "SizeAgentStarted", "SizeAgentCompleted",
+          "PersonalityAgentStarted", "PersonalityAgentCompleted",
+          "HistoricalAgentStarted", "HistoricalAgentCompleted",
+          "DecisionAgentStarted", "DecisionAgentCompleted",
+          "ConsensusReached", "MatchFound", "WorkflowCompleted",
+        ],
+        source: ["sock-matcher.agents"],
+      },
+      targets: [new targets.LambdaFunction(wsBroadcastFn)],
+    });
+
+    // ============================================================
     // OUTPUTS
     // ============================================================
+
+    new cdk.CfnOutput(this, "WebSocketApiUrl", {
+      value: webSocketStage.url,
+      description: "WebSocket API URL for real-time updates",
+    });
 
     new cdk.CfnOutput(this, "SocksTableName", {
       value: this.socksTable.tableName,

@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { io } from 'socket.io-client';
+import { config } from './config';
 import './AgentProgressTracker.css';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
+// API Gateway URLs from config
+const WS_URL = config.WEBSOCKET_URL;
+const BACKEND_URL = config.BACKEND_URL;
 
 const AGENTS = [
   { id: 'color', name: 'Dr. Chromatius', role: 'Color Analysis', emoji: '🎨', description: 'PhD in Chromatics' },
@@ -25,80 +27,126 @@ function AgentProgressTracker({ sockId, onComplete }) {
   const [totalCost, setTotalCost] = useState(0);
   const [totalTokens, setTotalTokens] = useState(0);
   const [connected, setConnected] = useState(false);
-  const socketRef = useRef(null);
+  const wsRef = useRef(null);
 
   useEffect(() => {
     if (!sockId) return;
 
-    // Connect to WebSocket
-    const socket = io(BACKEND_URL, {
-      transports: ['websocket', 'polling'],
-    });
-    socketRef.current = socket;
+    // Connect to API Gateway WebSocket
+    const connectWebSocket = () => {
+      if (!WS_URL) {
+        console.warn('No WebSocket URL configured, using polling only');
+        return null;
+      }
 
-    socket.on('connect', () => {
-      console.log('🔌 Connected to WebSocket');
-      setConnected(true);
-      socket.emit('subscribe', sockId);
-    });
+      const ws = new WebSocket(WS_URL);
+      
+      ws.onopen = () => {
+        console.log('🔌 Connected to API Gateway WebSocket');
+        setConnected(true);
+        // Subscribe to this sock's updates
+        ws.send(JSON.stringify({
+          action: 'subscribe',
+          sockId: sockId,
+        }));
+      };
 
-    socket.on('disconnect', () => {
-      console.log('🔌 Disconnected from WebSocket');
-      setConnected(false);
-    });
+      ws.onclose = () => {
+        console.log('🔌 WebSocket disconnected');
+        setConnected(false);
+      };
 
-    socket.on('agent:started', (data) => {
-      console.log('🚀 Agent started:', data);
-      setStatus(prev => ({
-        ...prev,
-        currentAgent: data.agent,
-        progress: data.progress,
-      }));
-      setThinkingMessage(`${data.agentName} is analyzing...`);
-    });
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setConnected(false);
+      };
 
-    socket.on('agent:progress', (data) => {
-      setStatus(prev => ({
-        ...prev,
-        progress: data.progress,
-      }));
-      setThinkingMessage(data.thinking);
-    });
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          console.log('📨 WebSocket message:', message);
+          handleWebSocketMessage(message);
+        } catch (err) {
+          console.error('Failed to parse WebSocket message:', err);
+        }
+      };
 
-    socket.on('agent:completed', (data) => {
-      console.log('✅ Agent completed:', data);
-      setStatus(prev => ({
-        ...prev,
-        completedAgents: [...prev.completedAgents, data.agent],
-        progress: data.progress,
-        currentAgent: null,
-      }));
-      setAgentResults(prev => ({
-        ...prev,
-        [data.agent]: {
-          result: data.result,
-          tokens: data.tokens,
-          cost: parseFloat(data.cost),
-        },
-      }));
-      setTotalTokens(prev => prev + data.tokens);
-      setTotalCost(prev => prev + parseFloat(data.cost));
-    });
+      return ws;
+    };
 
-    socket.on('workflow:complete', (data) => {
-      console.log('🎉 Workflow complete:', data);
-      setIsComplete(true);
-      setStatus(prev => ({ ...prev, progress: 100 }));
-      if (onComplete) onComplete();
-    });
+    const handleWebSocketMessage = (message) => {
+      const { type, data } = message;
 
-    // Fallback polling in case WebSocket fails
+      switch (type) {
+        case 'agent:started':
+          setStatus(prev => ({
+            ...prev,
+            currentAgent: data.agent,
+            progress: data.progress || prev.progress,
+          }));
+          setThinkingMessage(`${data.agentName || data.agent} is analyzing...`);
+          break;
+
+        case 'agent:progress':
+          setStatus(prev => ({
+            ...prev,
+            progress: data.progress || prev.progress,
+          }));
+          if (data.thinking) {
+            setThinkingMessage(data.thinking);
+          }
+          break;
+
+        case 'agent:completed':
+          setStatus(prev => ({
+            ...prev,
+            completedAgents: [...prev.completedAgents, data.agent],
+            progress: data.progress || prev.progress,
+            currentAgent: null,
+          }));
+          if (data.tokens && data.cost) {
+            setAgentResults(prev => ({
+              ...prev,
+              [data.agent]: {
+                result: data.result,
+                tokens: data.tokens,
+                cost: parseFloat(data.cost),
+              },
+            }));
+            setTotalTokens(prev => prev + data.tokens);
+            setTotalCost(prev => prev + parseFloat(data.cost));
+          }
+          break;
+
+        case 'workflow:complete':
+          setIsComplete(true);
+          setStatus(prev => ({ ...prev, progress: 100 }));
+          if (onComplete) onComplete();
+          break;
+
+        default:
+          console.log('Unknown message type:', type);
+      }
+    };
+
+    wsRef.current = connectWebSocket();
+
+    // Polling fallback for status updates
     const pollInterval = setInterval(async () => {
-      if (isComplete) return;
+      if (isComplete || !BACKEND_URL) return;
       try {
         const res = await fetch(`${BACKEND_URL}/api/socks/${sockId}/status`);
         if (res.ok) {
           const data = await res.json();
+          
+          // Update progress from polling
+          setStatus(prev => ({
+            ...prev,
+            progress: data.progress || prev.progress,
+            currentAgent: data.currentAgent || prev.currentAgent,
+            completedAgents: data.completedAgents || prev.completedAgents,
+          }));
+
           if (data.status === 'complete' && !isComplete) {
             setIsComplete(true);
             setStatus(prev => ({ ...prev, progress: 100 }));
@@ -108,11 +156,12 @@ function AgentProgressTracker({ sockId, onComplete }) {
       } catch (err) {
         // Ignore polling errors
       }
-    }, 5000);
+    }, 2000);
 
     return () => {
-      socket.emit('unsubscribe', sockId);
-      socket.disconnect();
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
       clearInterval(pollInterval);
     };
   }, [sockId, onComplete, isComplete]);
@@ -132,6 +181,7 @@ function AgentProgressTracker({ sockId, onComplete }) {
       <h3 className="tracker-title">
         🤖 AI Agent Committee Deliberating...
         {connected && <span className="ws-indicator">🟢 Live</span>}
+        {!connected && WS_URL && <span className="ws-indicator ws-disconnected">🔴 Connecting...</span>}
       </h3>
       
       <div className="progress-container">

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import AgentTranscript from './AgentTranscript';
+import { config } from './config';
 import './Matches.css';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+const BACKEND_URL = config.BACKEND_URL;
 
 function Matches({ onNavigate, sockId }) {
   const [selectedMatch, setSelectedMatch] = useState(null);

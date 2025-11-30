@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { getIdToken, signOut } from './auth';
 import AgentProgressTracker from './AgentProgressTracker';
+import { config } from './config';
 import './Upload.css';
 
 const API_URL = 'https://acs95drvib.execute-api.us-west-2.amazonaws.com/prod';
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+const BACKEND_URL = config.BACKEND_URL;
 
 function Upload({ onNavigate }) {
   const [selectedFile, setSelectedFile] = useState(null);
