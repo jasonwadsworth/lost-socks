@@ -262,6 +262,35 @@ export class QuantumImageProcessorStack extends cdk.Stack {
       },
     });
 
+    // Add CORS headers to Gateway Responses (for 4xx/5xx errors including 401)
+    const corsResponseParameters = {
+      'gatewayresponse.header.Access-Control-Allow-Origin': "'https://solemate.cloud'",
+      'gatewayresponse.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+      'gatewayresponse.header.Access-Control-Allow-Methods': "'GET,POST,PUT,DELETE,OPTIONS'",
+      'gatewayresponse.header.Access-Control-Allow-Credentials': "'true'",
+    };
+
+    // Add CORS to common error responses
+    api.addGatewayResponse('Unauthorized', {
+      type: apigateway.ResponseType.UNAUTHORIZED,
+      responseHeaders: corsResponseParameters,
+    });
+
+    api.addGatewayResponse('AccessDenied', {
+      type: apigateway.ResponseType.ACCESS_DENIED,
+      responseHeaders: corsResponseParameters,
+    });
+
+    api.addGatewayResponse('Default4XX', {
+      type: apigateway.ResponseType.DEFAULT_4XX,
+      responseHeaders: corsResponseParameters,
+    });
+
+    api.addGatewayResponse('Default5XX', {
+      type: apigateway.ResponseType.DEFAULT_5XX,
+      responseHeaders: corsResponseParameters,
+    });
+
     // Cognito Authorizer (import by ARN if provided, otherwise create new)
     const userPoolArn = props?.cognitoUserPoolArn || this.node.tryGetContext('cognitoUserPoolArn');
     let authorizer: apigateway.CognitoUserPoolsAuthorizer | undefined;
