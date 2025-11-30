@@ -1,21 +1,53 @@
 import { useState } from 'react';
+import { signIn, signUp, confirmSignUp } from './auth';
 import './Login.css';
 
 function Login({ onNavigate }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmCode, setConfirmCode] = useState('');
   const [remember, setRemember] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState('signin'); // 'signin', 'signup', 'confirm'
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     
     if (!email || !password) {
-      alert('Please fill in all fields');
+      setError('Please fill in all fields');
       return;
     }
 
-    // Navigate to upload page after "login"
-    onNavigate('upload');
+    setLoading(true);
+    try {
+      if (mode === 'signin') {
+        await signIn(email, password);
+        onNavigate('upload');
+      } else if (mode === 'signup') {
+        await signUp(email, password);
+        setMode('confirm');
+      } else if (mode === 'confirm') {
+        if (!confirmCode) {
+          setError('Please enter the confirmation code');
+          setLoading(false);
+          return;
+        }
+        await confirmSignUp(email, confirmCode);
+        await signIn(email, password);
+        onNavigate('upload');
+      }
+    } catch (err) {
+      setError(err.message || 'Authentication failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleMode = () => {
+    setError('');
+    setMode(mode === 'signin' ? 'signup' : 'signin');
   };
 
   return (
@@ -42,55 +74,101 @@ function Login({ onNavigate }) {
           
           <div className="login-right">
             <div className="login-card">
-              <h2 className="login-title">Welcome!</h2>
-              <p className="login-subtitle">Sign in to find your perfect pairs!</p>
+              <h2 className="login-title">
+                {mode === 'confirm' ? 'Confirm Email' : 'Welcome!'}
+              </h2>
+              <p className="login-subtitle">
+                {mode === 'confirm' 
+                  ? 'Check your email for a verification code'
+                  : mode === 'signup' 
+                    ? 'Create an account to find your pairs!'
+                    : 'Sign in to find your perfect pairs!'}
+              </p>
+        
+        {error && <div className="error-message">{error}</div>}
         
         <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="you@example.com"
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-            />
-          </div>
-          
-          <div className="form-options">
-            <label className="checkbox-label">
+          {mode !== 'confirm' && (
+            <>
+              <div className="form-group">
+                <label htmlFor="email">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="you@example.com"
+                  disabled={loading}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="password">Password</label>
+                <input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  disabled={loading}
+                />
+              </div>
+            </>
+          )}
+
+          {mode === 'confirm' && (
+            <div className="form-group">
+              <label htmlFor="confirmCode">Verification Code</label>
               <input
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
+                type="text"
+                id="confirmCode"
+                value={confirmCode}
+                onChange={(e) => setConfirmCode(e.target.value)}
+                required
+                placeholder="Enter 6-digit code"
+                disabled={loading}
               />
-              <span>Remember me</span>
-            </label>
-            <a href="#" className="forgot-password">Forgot password?</a>
-          </div>
+            </div>
+          )}
           
-          <button type="submit" className="login-button">
-            <span className="button-text">Let's Find Socks!</span>
+          {mode === 'signin' && (
+            <div className="form-options">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                />
+                <span>Remember me</span>
+              </label>
+              <a href="#" className="forgot-password">Forgot password?</a>
+            </div>
+          )}
+          
+          <button type="submit" className="login-button" disabled={loading}>
+            <span className="button-text">
+              {loading 
+                ? (mode === 'signup' ? 'Creating account...' : mode === 'confirm' ? 'Verifying...' : 'Signing in...')
+                : mode === 'signup' 
+                  ? 'Create Account'
+                  : mode === 'confirm'
+                    ? 'Verify & Sign In'
+                    : "Let's Find Socks!"}
+            </span>
             <span className="button-emoji">🧦</span>
           </button>
         </form>
         
-              <div className="signup-link">
-                Don't have an account? <a href="#">Sign up</a>
-              </div>
+              {mode !== 'confirm' && (
+                <div className="signup-link">
+                  {mode === 'signin' ? "Don't have an account? " : "Already have an account? "}
+                  <a href="#" onClick={(e) => { e.preventDefault(); toggleMode(); }}>
+                    {mode === 'signin' ? 'Sign up' : 'Sign in'}
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>
