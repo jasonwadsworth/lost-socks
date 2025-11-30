@@ -1,105 +1,100 @@
-# 🧦 Sock Matcher AI Agent Committee - Demo Pitch
+# 🧦 SoleMate.cloud - 60 Second Pitch
 
-## The Hook (10 seconds)
-> "What if matching socks was too important to leave to a simple if/else statement?"
+## **"Find Your Sole Mate"** - AI-Powered Sock Dating
 
-## The Problem We're Solving (20 seconds)
-Every year, **billions of socks** go unmatched. The trauma of losing a sock's soulmate is real. 
-
-Traditional solutions like `sock1.color === sock2.color` are:
-- Too fast (0.001ms)
-- Too cheap ($0.000001)
-- Too simple (1 line of code)
-
-**We needed something better.**
+### 🌐 Live at: **https://solemate.cloud**
 
 ---
 
-## Our Solution: The AI Agent Committee (30 seconds)
+## THE PITCH (60 seconds)
 
-We assembled a **committee of 5 specialized AI agents** to deliberate on sock compatibility:
+**[0-10 sec] THE HOOK**
+> "We built **SoleMate** - a dating app for socks. Because `sock.color === sock.color` was just too simple."
 
-| Agent | Role | Expertise |
-|-------|------|-----------|
-| 🎨 **Dr. Chromatius** | Color Analysis | PhD in Chromatics, cultural significance |
-| 📏 **ISO Expert** | Size Validation | ISO 3635:1981 compliance specialist |
-| 🔮 **Prof. Sockmund Freud** | Personality Analysis | MBTI & Zodiac for socks |
-| 📊 **Data Archaeologist** | Historical Context | Monte Carlo simulations |
-| ⚖️ **Justice Sockrates** | Final Decision | Philosophical synthesis |
+**[10-25 sec] THE PROBLEM**
+> "Every year, millions of socks lose their partners in the laundry. Traditional matching? One line of code. But we asked: what if sock matching deserved *enterprise architecture*?"
 
----
+**[25-45 sec] THE SOLUTION - Show Architecture**
+> "So we assembled a **committee of 5 AI agents** powered by **Bedrock Claude 3**:
+> - Dr. Chromatius analyzes color psychology
+> - Prof. Sockmund Freud determines the sock's MBTI type  
+> - Justice Sockrates renders the final philosophical verdict
+>
+> All orchestrated by **Step Functions**, broadcasting **20+ events** through **EventBridge**, with **real-time WebSocket updates**."
 
-## The Architecture (Show Diagram - 30 seconds)
+**[45-55 sec] THE NUMBERS**
+> "The result? **$0.15 per match** instead of $0.000001. **30 seconds** instead of milliseconds. **17 AWS services** to do what one if-statement could do."
 
-**17 AWS Services** working together:
-- 3 Bedrock Agents with Claude 3 Sonnet
-- Step Functions orchestrating parallel agent execution
-- EventBridge publishing 20+ events per sock
-- API Gateway WebSocket for real-time updates
-- DynamoDB for "historical analysis"
-
-**Key Stats:**
-- Processing time: **~30 seconds** (vs 0.001ms)
-- Cost per match: **$0.15** (vs $0.000001)
-- Over-engineering factor: **150,000,000x more expensive!**
+**[55-60 sec] THE CLOSER**
+> "We're **150 million times more expensive** than necessary. Check it out at **solemate.cloud**."
 
 ---
 
-## Live Demo Flow (2 minutes)
+## AWS SERVICES BINGO (17 Services!)
 
-1. **Upload a sock photo** → "Summoning the AI Agent Committee"
-2. **Watch agents deliberate in real-time:**
-   - "Dr. Chromatius is analyzing RGB values..."
-   - "Prof. Sockmund Freud is conducting Rorschach analysis..."
-   - "Justice Sockrates is consulting philosophical frameworks..."
-3. **See the verdict:** "FULLY MATCHABLE - Unanimous consensus!"
-4. **View the transcript:** Full deliberation with token counts and costs
-5. **The punchline:** "Total cost: $0.15 for what could be `color === color`"
-
----
-
-## Key Talking Points for Judges
-
-### For Swami (AI/ML)
-- "We use **multi-agent orchestration** because sock matching is too complex for a single model"
-- "Each agent has a distinct **personality embedding** and expertise domain"
-- "The consensus mechanism ensures **no sock is left behind**"
-
-### For Jeff Barr (AWS Services)
-- "We achieved **AWS Service Bingo** with 17 services in one architecture"
-- "The event-driven architecture publishes **20+ EventBridge events** per sock"
-- "Real-time WebSocket updates via **API Gateway** for live deliberation tracking"
+| # | Service | Ridiculous Use |
+|---|---------|----------------|
+| 1 | **Lambda** | 11 functions for sock analysis |
+| 2 | **Bedrock** | 3 AI agents with PhDs |
+| 3 | **Step Functions** | Agent committee orchestration |
+| 4 | **EventBridge** | 20+ events per sock |
+| 5 | **DynamoDB** | 3 tables for sock data |
+| 6 | **API Gateway REST** | Sock submission API |
+| 7 | **API Gateway WebSocket** | Live deliberation updates |
+| 8 | **S3** | Sock photo storage |
+| 9 | **CloudWatch** | Agent thought logs |
+| 10 | **X-Ray** | Tracing sock journeys |
+| 11 | **IAM** | 15+ policies for socks |
+| 12 | **Cognito** | Sock owner auth |
+| 13 | **CloudFront** | Global sock CDN |
+| 14 | **CloudFormation** | IaC for socks |
+| 15 | **Secrets Manager** | Sock secrets |
+| 16 | **STS** | Cross-service sock auth |
+| 17 | **KMS** | Encrypted sock data |
 
 ---
 
-## The "But Why?" Answers
+## THE AI AGENT COMMITTEE
 
-**Q: Why 5 agents?**
-> "Because matching socks requires expertise in color theory, international standards, psychology, historical patterns, AND philosophical synthesis. Obviously."
-
-**Q: Why does it cost $0.15?**
-> "Quality sock matching isn't cheap. We're using Claude 3 Sonnet - the same AI that could write poetry or solve complex problems - to determine if two socks match."
-
-**Q: Why 30 seconds?**
-> "The agents need time to deliberate. Justice Sockrates doesn't rush to judgment."
-
-**Q: Couldn't you just compare colors?**
-> "That's what Big Laundry wants you to think."
+| 🤖 | Agent | Expertise |
+|----|-------|-----------|
+| 🎨 | **Dr. Chromatius** | PhD in Chromatics |
+| 📏 | **ISO Expert** | ISO 3635:1981 Specialist |
+| 🔮 | **Prof. Sockmund Freud** | Sock Psychologist |
+| 📊 | **Data Archaeologist** | Monte Carlo Simulations |
+| ⚖️ | **Justice Sockrates** | Philosophical Arbiter |
 
 ---
 
-## Closing Line
+## KEY STATS
 
-> "We built the most sophisticated sock matching system ever created. It's 150 million times more expensive than necessary, takes 30 seconds instead of milliseconds, and uses 17 AWS services to do what one line of code could do. **And we're proud of it.**"
+| Metric | Our Solution | Simple Solution |
+|--------|--------------|-----------------|
+| **Cost** | $0.15 | $0.000001 |
+| **Time** | 30 seconds | 0.001ms |
+| **Services** | 17 | 0 |
+| **AI Agents** | 5 | 0 |
+| **Events** | 20+ | 0 |
+| **Lines of Code** | 5,000+ | 1 |
+
+**Over-engineering factor: 150,000,000x** 🎉
 
 ---
 
-## Demo Checklist
+## DEMO FLOW
 
-- [ ] Frontend running at deployed URL
-- [ ] Have a sock image ready to upload
-- [ ] Architecture diagram ready to show
-- [ ] Transcript section ready to expand
-- [ ] Cost comparison ready to highlight
+1. Go to **solemate.cloud**
+2. Upload a sock photo
+3. Watch 5 AI agents deliberate in real-time
+4. See the verdict: "FULLY MATCHABLE"
+5. Show cost: "$0.15 for what could be `color === color`"
 
-**Remember:** The goal is to make judges laugh while being genuinely impressed by the technical implementation!
+---
+
+## BACKUP ONE-LINERS
+
+- "We bought solemate.cloud because solemate.io was taken by an actual dating site"
+- "Prof. Sockmund Freud believes every sock has an inner life"
+- "Justice Sockrates once took 45 seconds to decide if blue matches blue"
+- "Our Monte Carlo simulation runs 10,000 iterations. Spoiler: blue still matches blue"
+- "That's what Big Laundry wants you to think"
