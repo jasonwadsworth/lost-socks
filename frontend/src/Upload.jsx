@@ -4,7 +4,7 @@ import AgentProgressTracker from './AgentProgressTracker';
 import './Upload.css';
 
 const API_URL = 'https://acs95drvib.execute-api.us-west-2.amazonaws.com/prod';
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 
 function Upload({ onNavigate }) {
   const [selectedFile, setSelectedFile] = useState(null);

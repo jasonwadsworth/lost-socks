@@ -25,38 +25,136 @@
   justify-content: center;
 }
 
-.lonely-sock {
+.story-text {
   position: absolute;
+  top: 20%;
+  width: 100%;
+  text-align: center;
+  z-index: 10;
+}
+
+.story-text p {
+  font-size: 32px;
+  color: white;
+  font-weight: 600;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.fade-in {
   animation: fadeIn 0.8s ease;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.5); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.lonely-sock {
+  position: absolute;
+  animation: sockAppear 0.8s ease;
+  transition: all 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes sockAppear {
+  from { opacity: 0; transform: scale(0.3) rotate(-20deg); }
+  to { opacity: 1; transform: scale(1) rotate(0deg); }
 }
 
 .sock-left {
-  left: 30%;
-  transform: translateX(-50%);
-  transition: all 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  left: 20%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 
-.sock-left.move-left {
-  left: 20%;
+.sock-left.crying {
+  animation: shake 0.5s ease-in-out infinite;
+}
+
+.sock-left.move-together-left {
+  left: 30%;
+  animation: circleLeft 2s ease-in-out forwards;
 }
 
 .sock-right {
-  right: 30%;
-  transform: translateX(50%) scaleX(-1);
-  transition: all 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-.sock-right.move-right {
   right: 20%;
+  top: 50%;
+  transform: translate(50%, -50%) scaleX(-1);
 }
 
-.sock-svg {
-  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.3));
+.sock-right.crying {
+  animation: shake 0.5s ease-in-out infinite;
+}
+
+.sock-right.move-together-right {
+  right: 30%;
+  animation: circleRight 2s ease-in-out forwards;
+}
+
+@keyframes circleLeft {
+  0% {
+    left: 20%;
+    top: 50%;
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  25% {
+    left: 28%;
+    top: 60%;
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+  50% {
+    left: 35%;
+    top: 50%;
+    transform: translate(-50%, -50%) rotate(180deg);
+  }
+  75% {
+    left: 28%;
+    top: 40%;
+    transform: translate(-50%, -50%) rotate(270deg);
+  }
+  100% {
+    left: 30%;
+    top: 50%;
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes circleRight {
+  0% {
+    right: 20%;
+    top: 50%;
+    transform: translate(50%, -50%) scaleX(-1) rotate(0deg);
+  }
+  25% {
+    right: 28%;
+    top: 60%;
+    transform: translate(50%, -50%) scaleX(-1) rotate(90deg);
+  }
+  50% {
+    right: 35%;
+    top: 50%;
+    transform: translate(50%, -50%) scaleX(-1) rotate(180deg);
+  }
+  75% {
+    right: 28%;
+    top: 40%;
+    transform: translate(50%, -50%) scaleX(-1) rotate(270deg);
+  }
+  100% {
+    right: 30%;
+    top: 50%;
+    transform: translate(50%, -50%) scaleX(-1) rotate(360deg);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translate(-50%, -50%) rotate(-2deg); }
+  50% { transform: translate(-50%, -50%) rotate(2deg); }
+}
+
+.sock-image {
+  width: 200px;
+  height: auto;
+  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.4));
   animation: float 3s ease-in-out infinite;
 }
 
@@ -65,52 +163,56 @@
   50% { transform: translateY(-15px); }
 }
 
-.sad-eye {
-  animation: blink 4s infinite;
-}
-
-@keyframes blink {
-  0%, 48%, 52%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-.sad-mouth {
-  animation: sadFace 2s ease-in-out infinite;
-}
-
-@keyframes sadFace {
-  0%, 100% { d: path("M45 35 Q50 33 55 35"); }
-  50% { d: path("M45 37 Q50 35 55 37"); }
-}
-
 .tear {
   position: absolute;
-  width: 8px;
-  height: 12px;
-  background: linear-gradient(180deg, rgba(135, 206, 250, 0.8) 0%, rgba(135, 206, 250, 0.4) 100%);
+  width: 12px;
+  height: 18px;
+  background: linear-gradient(180deg, rgba(135, 206, 250, 0.9) 0%, rgba(135, 206, 250, 0.5) 100%);
   border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
-  top: 50px;
-  left: 55px;
-  animation: tearDrop 3s ease-in-out infinite;
+  animation: tearDrop 2s ease-in-out infinite;
   opacity: 0;
+}
+
+.tear-1 {
+  top: 60px;
+  left: 75px;
+  animation-delay: 0s;
+}
+
+.tear-2 {
+  top: 60px;
+  left: 105px;
+  animation-delay: 0.3s;
+}
+
+.tear-3 {
+  top: 65px;
+  left: 85px;
+  animation-delay: 0.6s;
+}
+
+.tear-4 {
+  top: 65px;
+  left: 95px;
+  animation-delay: 0.9s;
 }
 
 @keyframes tearDrop {
   0%, 20% { 
     opacity: 0;
-    transform: translateY(0);
+    transform: translateY(0) scale(0.5);
   }
   30% {
-    opacity: 0.8;
-    transform: translateY(5px);
+    opacity: 1;
+    transform: translateY(10px) scale(1);
   }
-  60% {
-    opacity: 0.6;
-    transform: translateY(30px);
+  70% {
+    opacity: 0.7;
+    transform: translateY(60px) scale(0.8);
   }
   100% {
     opacity: 0;
-    transform: translateY(50px);
+    transform: translateY(100px) scale(0.3);
   }
 }
 
@@ -122,33 +224,115 @@
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  z-index: 1;
+  transition: opacity 0.8s ease;
+}
+
+.searching-container.fade-circles {
+  opacity: 0.3;
 }
 
 .search-pulse {
   position: absolute;
-  width: 200px;
-  height: 200px;
-  border: 3px solid rgba(255, 107, 157, 0.6);
+  width: 300px;
+  height: 300px;
+  border: 4px solid rgba(255, 107, 157, 0.7);
   border-radius: 50%;
   animation: pulse 2s ease-out infinite;
 }
 
 .search-pulse.delay-1 {
-  animation-delay: 0.5s;
+  animation-delay: 0.4s;
 }
 
 .search-pulse.delay-2 {
-  animation-delay: 1s;
+  animation-delay: 0.8s;
 }
 
 @keyframes pulse {
   0% {
-    transform: scale(0.5);
+    transform: scale(0.3);
     opacity: 1;
   }
   100% {
-    transform: scale(2.5);
+    transform: scale(1.5);
     opacity: 0;
+  }
+}
+
+.heart-particles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.heart {
+  position: absolute;
+  font-size: 60px;
+  animation: heartFloat 2.5s ease-in-out infinite;
+  opacity: 0;
+}
+
+.heart.pink {
+  color: #ff6b9d;
+}
+
+.heart.purple {
+  color: #8b7ba8;
+}
+
+.heart:nth-child(1) {
+  top: 40%;
+  left: 48%;
+  animation-delay: 0s;
+}
+
+.heart:nth-child(2) {
+  top: 45%;
+  left: 52%;
+  animation-delay: 0.2s;
+}
+
+.heart:nth-child(3) {
+  top: 42%;
+  left: 50%;
+  animation-delay: 0.4s;
+}
+
+.heart:nth-child(4) {
+  top: 38%;
+  left: 46%;
+  animation-delay: 0.6s;
+}
+
+.heart:nth-child(5) {
+  top: 43%;
+  left: 54%;
+  animation-delay: 0.8s;
+}
+
+.heart:nth-child(6) {
+  top: 41%;
+  left: 49%;
+  animation-delay: 1s;
+}
+
+@keyframes heartFloat {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.3);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(-50%, -30px) scale(1);
+  }
+  70% {
+    opacity: 0.8;
+    transform: translate(-50%, -60px) scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -100px) scale(0.2);
   }
 }
 
@@ -156,6 +340,7 @@
   position: absolute;
   text-align: center;
   animation: titleAppear 1s ease-out;
+  z-index: 100;
 }
 
 @keyframes titleAppear {

@@ -94,8 +94,15 @@ function Login({ onNavigate }) {
   return (
     <div className="login-container">
       <div className="background-animation">
-        {[...Array(50)].map((_, i) => (
-          <div key={i} className="floating-sock">🧦</div>
+        {[...Array(25)].map((_, i) => (
+          <div key={i} className="floating-sock">
+            <img src="/sock-pink.png" alt="" className="floating-sock-img" />
+          </div>
+        ))}
+        {[...Array(25)].map((_, i) => (
+          <div key={i + 25} className="floating-sock">
+            <img src="/sock-purple.png" alt="" className="floating-sock-img" />
+          </div>
         ))}
       </div>
       
@@ -104,9 +111,8 @@ function Login({ onNavigate }) {
           <div className="login-left">
             <div className="brand-section">
               <div className="logo-container">
-                <div className="sock-icon">🧦</div>
-                <div className="sock-icon-pair">🧦</div>
-                <div className="sparkle">✨</div>
+                <img src="/sock-pink.png" alt="Sock" className="sock-icon-img" />
+                <img src="/sock-purple.png" alt="Sock" className="sock-icon-img-pair" />
               </div>
               <h1 className="brand-title">Sole Mates!</h1>
               <p className="brand-tagline">Every sock deserves its pair 💕</p>
@@ -161,7 +167,7 @@ function Login({ onNavigate }) {
           
           <button type="submit" className="login-button" disabled={loading}>
             <span className="button-text">{getButtonText()}</span>
-            <span className="button-emoji">🧦</span>
+            <img src="/sock-pink.png" alt="" className="button-sock-icon" />
           </button>
         </form>
         
