@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import AgentTranscript from './AgentTranscript';
 import './Matches.css';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 
 function Matches({ onNavigate, sockId }) {
   const [selectedMatch, setSelectedMatch] = useState(null);
@@ -150,40 +151,15 @@ function Matches({ onNavigate, sockId }) {
               <span className="stat">💰 Cost: {matchData.estimatedCost}</span>
               <span className="stat">✅ Votes: {matchData.agentVotes?.length || 5}/5</span>
             </div>
-            <button 
-              className="transcript-toggle"
-              onClick={() => setShowTranscript(!showTranscript)}
-            >
-              {showTranscript ? '📕 Hide' : '📖 Show'} Full Deliberation Transcript
-            </button>
           </div>
         )}
 
-        {/* Full Transcript */}
-        {showTranscript && transcript && (
-          <div className="transcript-section">
-            <h3>📜 Agent Deliberation Transcript</h3>
-            <div className="transcript-list">
-              {transcript.transcript.map((entry, idx) => (
-                <div key={idx} className="transcript-entry">
-                  <div className="transcript-header">
-                    <span className="agent-name">{entry.agent}</span>
-                    <span className="timestamp">{new Date(entry.timestamp).toLocaleTimeString()}</span>
-                  </div>
-                  <p className="transcript-analysis">{entry.analysis}</p>
-                  <div className="transcript-meta">
-                    <span>🎫 Tokens: {entry.tokenUsage}</span>
-                    <span>💵 Cost: ${entry.cost.toFixed(4)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="transcript-totals">
-              <span>📊 Total Tokens: {transcript.totalTokens}</span>
-              <span>💰 Total Cost: ${transcript.totalCost.toFixed(4)}</span>
-            </div>
-          </div>
-        )}
+        {/* Full Transcript Component */}
+        <AgentTranscript 
+          transcript={transcript}
+          isOpen={showTranscript}
+          onToggle={() => setShowTranscript(!showTranscript)}
+        />
 
         <div className="matches-grid">
           {matches.map((match) => (
