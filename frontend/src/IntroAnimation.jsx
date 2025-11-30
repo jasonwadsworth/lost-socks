@@ -4,7 +4,7 @@ import './IntroAnimation.css';
 /**
  * IntroAnimation Component
  * 
- * A magnificently over-engineered 6-second emotional journey featuring:
+ * A magnificently over-engineered 5-second emotional journey featuring:
  * - Random directional entry with cartoon physics (squash/stretch)
  * - Dramatic crying sequence with realistic body shake
  * - Growing water puddle effect using SVG gradients
@@ -47,12 +47,12 @@ function IntroAnimation({ onComplete }) {
       setShowTitle(true);
     }, 3500);
 
-    // 6.0s: Complete animation and transition to login
+    // 5.0s: Complete animation and transition to login
     const completeTimer = setTimeout(() => {
       if (onComplete) {
         onComplete();
       }
-    }, 6000);
+    }, 5000);
 
     return () => {
       clearTimeout(splashdownTimer);
@@ -69,12 +69,12 @@ function IntroAnimation({ onComplete }) {
       const newTears = [
         {
           id: `tear-${tearId++}`,
-          left: 37 + Math.random() * 3,
+          left: 24 + Math.random() * 2,
           delay: Math.random() * 0.2,
         },
         {
           id: `tear-${tearId++}`,
-          left: 60 + Math.random() * 3,
+          left: 33 + Math.random() * 2,
           delay: Math.random() * 0.2,
         },
       ];
@@ -132,56 +132,94 @@ function IntroAnimation({ onComplete }) {
 
       {/* Sock character wrapper */}
       <div className={`sock-wrapper enter-${entryDirection} ${animationPhase}`}>
-        {/* Pink cartoon sock SVG */}
-        <svg id="sock-character" viewBox="0 0 120 180" xmlns="http://www.w3.org/2000/svg">
-          {/* Folded cuff top */}
-          <path
-            d="M30,15 Q30,5 40,5 L80,5 Q90,5 90,15 L90,35 Q90,40 85,40 L35,40 Q30,40 30,35 Z"
-            fill="#FFD4E0"
-            stroke="#B85C7A"
-            strokeWidth="2.5"
-          />
-          <path
-            d="M32,25 L88,25 L88,38 Q88,42 84,42 L36,42 Q32,42 32,38 Z"
-            fill="#FFC0D0"
-            stroke="#B85C7A"
-            strokeWidth="2"
-          />
-
-          {/* Main sock body */}
-          <path
-            d="M35,40 L85,40 L85,120 Q85,135 75,145 L45,145 Q35,135 35,120 Z"
-            fill="#FF9EB5"
-            stroke="#B85C7A"
-            strokeWidth="2.5"
-          />
-
-          {/* Horizontal stripes */}
-          <line x1="35" y1="95" x2="85" y2="95" stroke="#FFD4E0" strokeWidth="4" />
-          <line x1="35" y1="105" x2="85" y2="105" stroke="#FFD4E0" strokeWidth="3" />
-          <line x1="35" y1="113" x2="85" y2="113" stroke="#FFD4E0" strokeWidth="3" />
-
-          {/* Sad eyebrows */}
-          <path d="M42,60 L48,58" stroke="#6B8E9E" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M78,60 L72,58" stroke="#6B8E9E" strokeWidth="2.5" strokeLinecap="round" />
-
-          {/* Large cartoon eyes */}
-          <ellipse cx="45" cy="68" rx="8" ry="10" fill="white" stroke="#333" strokeWidth="2" />
-          <ellipse cx="75" cy="68" rx="8" ry="10" fill="white" stroke="#333" strokeWidth="2" />
-          <circle cx="45" cy="70" r="4" fill="#333" />
-          <circle cx="75" cy="70" r="4" fill="#333" />
-
-          {/* Sad mouth */}
-          <ellipse cx="60" cy="88" rx="10" ry="12" fill="#E85A7B" stroke="#333" strokeWidth="2" />
-          <path d="M50,85 Q60,80 70,85" stroke="#333" strokeWidth="2.5" fill="none" />
-
-          {/* White glove hands */}
-          <ellipse cx="20" cy="75" rx="12" ry="15" fill="white" stroke="#999" strokeWidth="2" />
-          <ellipse cx="100" cy="75" rx="12" ry="15" fill="white" stroke="#999" strokeWidth="2" />
-
-          {/* Shadow */}
-          <ellipse cx="60" cy="150" rx="35" ry="8" fill="#999" opacity="0.3" />
-        </svg>
+        {/* Classic 2D cartoon sock character - proper L-shaped sock */}
+        <div id="sock-character">
+          <svg viewBox="0 0 450 400" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+            <defs>
+              {/* Soft gradient for sock body - faded grey-blue */}
+              <linearGradient id="sockBodyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style={{ stopColor: '#A8B8C8', stopOpacity: 1 }} />
+                <stop offset="50%" style={{ stopColor: '#C8D8E8', stopOpacity: 1 }} />
+                <stop offset="100%" style={{ stopColor: '#A8B8C8', stopOpacity: 1 }} />
+              </linearGradient>
+              {/* Darker cuff gradient */}
+              <linearGradient id="cuffGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style={{ stopColor: '#8898A8', stopOpacity: 1 }} />
+                <stop offset="50%" style={{ stopColor: '#98A8B8', stopOpacity: 1 }} />
+                <stop offset="100%" style={{ stopColor: '#8898A8', stopOpacity: 1 }} />
+              </linearGradient>
+              {/* Heel/toe patch */}
+              <radialGradient id="heelGradient">
+                <stop offset="0%" style={{ stopColor: '#7888A8', stopOpacity: 0.6 }} />
+                <stop offset="100%" style={{ stopColor: '#98A8B8', stopOpacity: 0.3 }} />
+              </radialGradient>
+            </defs>
+            
+            {/* SOCK BODY - L-shaped like a real sock lying down */}
+            
+            {/* Ribbed cuff at top */}
+            <rect x="80" y="20" width="100" height="50" rx="10" fill="url(#cuffGradient)" stroke="none" />
+            <line x1="82" y1="30" x2="178" y2="30" stroke="#6B7B8B" strokeWidth="2" opacity="0.5" />
+            <line x1="82" y1="38" x2="178" y2="38" stroke="#6B7B8B" strokeWidth="2" opacity="0.5" />
+            <line x1="82" y1="46" x2="178" y2="46" stroke="#6B7B8B" strokeWidth="2" opacity="0.5" />
+            <line x1="82" y1="54" x2="178" y2="54" stroke="#6B7B8B" strokeWidth="2" opacity="0.5" />
+            <line x1="82" y1="62" x2="178" y2="62" stroke="#6B7B8B" strokeWidth="2" opacity="0.5" />
+            
+            {/* Main leg portion - vertical */}
+            <rect x="85" y="70" width="90" height="220" fill="url(#sockBodyGradient)" stroke="none" />
+            
+            {/* Ankle/heel curve transition */}
+            <path 
+              d="M 85,290 L 175,290 Q 185,290 195,300 L 195,330 Q 195,340 185,345 L 90,345 Q 85,340 85,335 Z" 
+              fill="url(#sockBodyGradient)" 
+              stroke="none" 
+            />
+            
+            {/* Heel patch - darker reinforced area */}
+            <ellipse cx="130" cy="315" rx="35" ry="28" fill="url(#heelGradient)" stroke="none" />
+            
+            {/* Foot portion - horizontal extending right */}
+            <rect x="185" y="345" width="200" height="50" rx="8" fill="url(#sockBodyGradient)" stroke="none" />
+            
+            {/* Toe area - rounded end */}
+            <ellipse cx="385" cy="370" rx="30" ry="28" fill="#A8B8C8" stroke="none" />
+            
+            {/* EXPRESSIVE CARTOON FACE on the leg */}
+            
+            {/* Sad eyebrows - inverted V shapes */}
+            <path d="M 100,140 L 110,135 L 120,140" stroke="#4B5B6B" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M 160,140 L 150,135 L 140,140" stroke="#4B5B6B" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            
+            {/* Large teardrop-shaped eyes - white with black pupils */}
+            <ellipse cx="110" cy="170" rx="18" ry="22" fill="white" stroke="#333" strokeWidth="3" />
+            <ellipse cx="150" cy="170" rx="18" ry="22" fill="white" stroke="#333" strokeWidth="3" />
+            
+            {/* Pupils - looking slightly down (sad) */}
+            <circle cx="110" cy="175" r="8" fill="#333" />
+            <circle cx="150" cy="175" r="8" fill="#333" />
+            
+            {/* Tiny white highlights in eyes for life */}
+            <circle cx="113" cy="172" r="3" fill="white" />
+            <circle cx="153" cy="172" r="3" fill="white" />
+            
+            {/* Exaggerated tear ducts - darker areas at inner eye corners */}
+            <ellipse cx="120" cy="180" rx="6" ry="8" fill="#8898A8" opacity="0.5" />
+            <ellipse cx="140" cy="180" rx="6" ry="8" fill="#8898A8" opacity="0.5" />
+            
+            {/* Small downturned mouth - pathetic whimper */}
+            <path d="M 115,210 Q 130,203 145,210" stroke="#333" strokeWidth="4" fill="none" strokeLinecap="round" />
+            
+            {/* Optional: tiny lower lip quiver line */}
+            <path d="M 125,212 Q 130,214 135,212" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.6" />
+            
+            {/* Cartoon hands - simple white mittens/gloves */}
+            <ellipse cx="55" cy="180" rx="20" ry="28" fill="white" stroke="#999" strokeWidth="3" />
+            <ellipse cx="205" cy="180" rx="20" ry="28" fill="white" stroke="#999" strokeWidth="3" />
+            
+            {/* Shadow beneath sock */}
+            <ellipse cx="240" cy="395" rx="140" ry="8" fill="#000" opacity="0.2" />
+          </svg>
+        </div>
 
         {/* Tears container */}
         <div className="tears-container">

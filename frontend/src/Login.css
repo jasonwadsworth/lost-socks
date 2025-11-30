@@ -219,7 +219,7 @@
 
 .login-left {
   background: linear-gradient(135deg, rgba(72, 52, 212, 0.4) 0%, rgba(88, 86, 214, 0.4) 100%);
-  padding: 60px;
+  padding: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -606,6 +606,21 @@
 
 .signup-link a:hover::after {
   width: 100%;
+}
+
+.login-left .intro-animation-container {
+  transform: scale(0.85);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-left .intro-title {
+  position: relative;
+  margin-top: 20px;
 }
 
 @media (max-width: 968px) {

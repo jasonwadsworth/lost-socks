@@ -221,7 +221,7 @@
   position: absolute;
   width: 20px;
   height: 30px;
-  top: 38%;
+  top: 35%;
   will-change: transform, opacity;
   animation: tearFall 1.2s ease-in infinite;
 }
