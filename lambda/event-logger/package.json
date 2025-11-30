@@ -1,0 +1,11 @@
+{
+  "name": "sock-matcher-event-logger",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Event Logger - Audit Trail Obsessive",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.0.0",
+    "@aws-sdk/lib-dynamodb": "^3.0.0"
+  }
+}

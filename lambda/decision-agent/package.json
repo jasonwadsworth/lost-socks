@@ -1,0 +1,11 @@
+{
+  "name": "sock-matcher-decision-agent",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Final Decision Agent - Philosophical Arbiter",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.0.0",
+    "@aws-sdk/client-eventbridge": "^3.0.0"
+  }
+}

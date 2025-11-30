@@ -1,0 +1,11 @@
+{
+  "name": "sock-matcher-color-agent",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Color Analysis Agent - PhD in Chromatics",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.0.0",
+    "@aws-sdk/client-eventbridge": "^3.0.0"
+  }
+}

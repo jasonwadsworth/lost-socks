@@ -11,7 +11,8 @@
     "@Context7/*",
     "@github/*",
     "@playwright/*",
-    "@chrome-devtools/*"
+    "@chrome-devtools/*",
+    "@awslabs.aws-diagram-mcp-server/*"
   ],
   "toolsSettings": {
     "write": {
@@ -94,6 +95,17 @@
       "type": "stdio",
       "command": "docker",
       "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/github/github-mcp-server"]
+    },
+      "mcpServers": {
+    "awslabs.aws-diagram-mcp-server": {
+      "command": "uvx",
+      "args": ["awslabs.aws-diagram-mcp-server"],
+      "env": {
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      },
+      "autoApprove": [],
+      "disabled": false
     }
+  }
   }
 }
