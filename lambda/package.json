@@ -1,0 +1,33 @@
+{
+    "name": "ai-password-validator-lambda",
+    "version": "1.0.0",
+    "description": "AI-powered password length validation using Amazon Bedrock - because counting characters is too mainstream",
+    "main": "index.js",
+    "scripts": {
+        "build": "tsc",
+        "test": "jest",
+        "test:watch": "jest --watch"
+    },
+    "keywords": [
+        "aws",
+        "lambda",
+        "bedrock",
+        "ai",
+        "password",
+        "over-engineering"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "@aws-sdk/client-bedrock-runtime": "^3.0.0"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.0",
+        "@types/jest": "^30.0.0",
+        "@types/node": "^20.0.0",
+        "fast-check": "^4.3.0",
+        "jest": "^30.2.0",
+        "ts-jest": "^29.4.5",
+        "typescript": "^5.0.0"
+    }
+}

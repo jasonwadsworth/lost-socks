@@ -1,3 +1,13 @@
+.error-message {
+  background: rgba(255, 82, 82, 0.2);
+  border: 1px solid rgba(255, 82, 82, 0.5);
+  color: #ff5252;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
 .login-container {
   min-height: 100vh;
   display: flex;

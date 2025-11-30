@@ -7,7 +7,7 @@
   - Install testing dependencies: jest, fast-check
   - _Requirements: All_
 
-- [ ] 2. Implement backend data layer
+- [x] 2. Implement backend data layer
   - Create Sock data model with TypeScript interface
   - Implement SockRepository with in-memory storage
   - Add methods: save, findById, findByColorAndSize
@@ -21,7 +21,7 @@
   - **Property 2: ID uniqueness**
   - **Validates: Requirements 1.2**
 
-- [ ] 3. Implement backend service layer
+- [x] 3. Implement backend service layer
   - Create SockService with createSock and findMatches methods
   - Implement matching logic to filter by color and size
   - Ensure created sock excludes itself from match results
@@ -35,7 +35,7 @@
   - Test that requesting matches for a sock with unique attributes returns empty list
   - _Requirements: 2.2_
 
-- [ ] 4. Implement backend API endpoints
+- [x] 4. Implement backend API endpoints
   - Create Express server with CORS enabled
   - Implement POST /api/socks endpoint
   - Implement GET /api/socks/:id/matches endpoint

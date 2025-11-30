@@ -1,0 +1,21 @@
+{
+    "name": "cdk-infrastructure",
+    "version": "0.1.0",
+    "scripts": {
+        "build": "tsc",
+        "watch": "tsc -w",
+        "cdk": "cdk",
+        "synth": "cdk synth"
+    },
+    "devDependencies": {
+        "@types/node": "^20.0.0",
+        "aws-cdk": "^2.1033.0",
+        "typescript": "~5.0.0"
+    },
+    "dependencies": {
+        "@cdklabs/generative-ai-cdk-constructs": "^0.1.312",
+        "aws-cdk-lib": "^2.0.0",
+        "constructs": "^10.0.0",
+        "source-map-support": "^0.5.21"
+    }
+}

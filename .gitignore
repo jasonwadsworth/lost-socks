@@ -17,6 +17,12 @@ out/
 .next/
 .nuxt/
 
+# CDK
+cdk.out/
+*.js
+*.d.ts
+*.tsbuildinfo
+
 # IDE
 .vscode/
 .idea/
