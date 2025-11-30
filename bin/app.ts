@@ -14,6 +14,9 @@ new QuantumImageProcessorStack(app, 'QuantumImageProcessorStack', {
 });
 new AIPasswordValidatorStack(app, 'AIPasswordValidatorStack', {});
 new SockMatcherAgentsStack(app, 'SockMatcherAgentsStack', {
-  env: { region: 'us-west-2' },
+  env: { 
+    account: process.env.CDK_DEFAULT_ACCOUNT || process.env.AWS_ACCOUNT_ID,
+    region: 'us-west-2',
+  },
   description: 'Magnificently over-engineered sock matching with AI agent committee',
 });
