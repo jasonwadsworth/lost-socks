@@ -64,7 +64,9 @@ Generated: ${new Date().toISOString()}`;
 
 export const handler = async (event) => {
   const startTime = Date.now();
-  const { sockId, color, size } = event;
+  // Handle both direct invocation and EventBridge event structure
+  const detail = event.detail || event;
+  const { sockId, color, size } = detail;
   const agentId = `historical-agent-${Date.now()}`;
 
   console.log(`[HistoricalAgent] Starting analysis for sock ${sockId}`);

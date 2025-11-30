@@ -113,7 +113,9 @@ Certificate ID: SM-ISO-${Date.now()}`,
 
 export const handler = async (event) => {
   const startTime = Date.now();
-  const { sockId, color, size } = event;
+  // Handle both direct invocation and EventBridge event structure
+  const detail = event.detail || event;
+  const { sockId, color, size } = detail;
   const agentId = `size-agent-${Date.now()}`;
 
   console.log(`[SizeAgent] Starting validation for sock ${sockId}, size: ${size}`);

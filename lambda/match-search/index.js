@@ -30,8 +30,9 @@ const publishEvent = async (detailType, detail) => {
 export const handler = async (event) => {
   const startTime = Date.now();
   
-  // Extract sock info from the workflow state
-  const { sockId, color, size, finalDecision } = event;
+  // Extract sock info from the workflow state (handle EventBridge structure)
+  const detail = event.detail || event;
+  const { sockId, color, size, finalDecision } = detail;
   
   console.log(`[MatchSearch] Searching for matches for sock ${sockId}`);
 
