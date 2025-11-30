@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { getIdToken, signOut } from './auth';
+import AgentProgressTracker from './AgentProgressTracker';
 import './Upload.css';
 
 const API_URL = 'https://acs95drvib.execute-api.us-west-2.amazonaws.com/prod';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
 
 function Upload({ onNavigate }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [sockId, setSockId] = useState(null);
+  const [showAgentTracker, setShowAgentTracker] = useState(false);
   const [sockDetails, setSockDetails] = useState({
     color: '',
     pattern: '',
@@ -39,7 +43,7 @@ function Upload({ onNavigate }) {
         return;
       }
 
-      // Get pre-signed URL
+      // Get pre-signed URL and upload image
       const res = await fetch(`${API_URL}/upload-url`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -54,7 +58,6 @@ function Upload({ onNavigate }) {
 
       const { uploadUrl } = await res.json();
 
-      // Upload file to S3
       const uploadRes = await fetch(uploadUrl, {
         method: 'PUT',
         body: selectedFile,
@@ -63,23 +66,49 @@ function Upload({ onNavigate }) {
 
       if (!uploadRes.ok) throw new Error('Upload failed');
 
-      // Simulate AI analysis with ridiculous details
-      setTimeout(() => {
-        setSockDetails({
-          color: ['Midnight Blue', 'Sunset Orange', 'Mysterious Gray', 'Rebellious Red'][Math.floor(Math.random() * 4)],
-          pattern: ['Striped', 'Polka Dot', 'Argyle', 'Plain but Fancy'][Math.floor(Math.random() * 4)],
-          size: ['Petite', 'Medium', 'Large', 'Absolutely Massive'][Math.floor(Math.random() * 4)],
-          mood: ['Lonely', 'Adventurous', 'Melancholic', 'Optimistic'][Math.floor(Math.random() * 4)]
-        });
-        setAnalyzing(false);
-      }, 3000);
+      // Generate random sock attributes for the AI committee to analyze
+      const colors = ['blue', 'red', 'green', 'black', 'white', 'gray', 'navy', 'purple'];
+      const sizes = ['small', 'medium', 'large'];
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+      const randomSize = sizes[Math.floor(Math.random() * sizes.length)];
+
+      // Submit sock to backend - triggers the AI agent committee!
+      const sockRes = await fetch(`${BACKEND_URL}/api/socks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ color: randomColor, size: randomSize }),
+      });
+
+      if (!sockRes.ok) throw new Error('Failed to submit sock for analysis');
+
+      const sockData = await sockRes.json();
+      setSockId(sockData.id);
+      setShowAgentTracker(true);
+      setAnalyzing(false);
+
+      // Set initial sock details
+      setSockDetails({
+        color: randomColor.charAt(0).toUpperCase() + randomColor.slice(1),
+        pattern: ['Striped', 'Polka Dot', 'Argyle', 'Plain but Fancy'][Math.floor(Math.random() * 4)],
+        size: randomSize.charAt(0).toUpperCase() + randomSize.slice(1),
+        mood: ['Lonely', 'Adventurous', 'Melancholic', 'Optimistic'][Math.floor(Math.random() * 4)]
+      });
+
     } catch (err) {
       setUploadError(err.message);
       setAnalyzing(false);
     }
   };
 
-  const handleFindMatch = () => onNavigate('matches');
+  const handleAgentComplete = () => {
+    // Agents finished deliberating
+    console.log('Agent committee has reached consensus!');
+  };
+
+  const handleFindMatch = () => {
+    // Pass sockId to matches page
+    onNavigate('matches', { sockId });
+  };
 
   const handleLogout = () => {
     signOut();
@@ -100,7 +129,7 @@ function Upload({ onNavigate }) {
         </button>
 
         <h1 className="upload-title">Upload Your Lost Sock! 📸</h1>
-        <p className="upload-subtitle">Our advanced AI will analyze your sock's deepest characteristics</p>
+        <p className="upload-subtitle">Our AI Agent Committee will analyze your sock's deepest characteristics</p>
 
         {uploadError && <div className="error-message">{uploadError}</div>}
 
@@ -120,35 +149,42 @@ function Upload({ onNavigate }) {
             </label>
           </div>
 
-          {preview && !analyzing && !sockDetails.color && (
+          {preview && !analyzing && !showAgentTracker && (
             <button className="analyze-button" onClick={handleAnalyze}>
-              <span>Analyze Sock</span>
-              <span className="button-emoji">🔍</span>
+              <span>Summon the AI Agent Committee</span>
+              <span className="button-emoji">🤖</span>
             </button>
           )}
 
           {analyzing && (
             <div className="analyzing">
               <div className="spinner">🧦</div>
-              <p>Analyzing sock personality...</p>
+              <p>Uploading sock and summoning agents...</p>
               <div className="progress-bar"><div className="progress-fill"></div></div>
             </div>
           )}
 
-          {sockDetails.color && (
-            <div className="sock-analysis">
-              <h3>Sock Analysis Complete! ✨</h3>
-              <div className="analysis-grid">
-                <div className="analysis-item"><span className="analysis-label">Color:</span><span className="analysis-value">{sockDetails.color}</span></div>
-                <div className="analysis-item"><span className="analysis-label">Pattern:</span><span className="analysis-value">{sockDetails.pattern}</span></div>
-                <div className="analysis-item"><span className="analysis-label">Size:</span><span className="analysis-value">{sockDetails.size}</span></div>
-                <div className="analysis-item"><span className="analysis-label">Emotional State:</span><span className="analysis-value">{sockDetails.mood}</span></div>
+          {showAgentTracker && sockId && (
+            <>
+              <AgentProgressTracker 
+                sockId={sockId} 
+                onComplete={handleAgentComplete}
+              />
+              
+              <div className="sock-analysis">
+                <h3>Sock Profile 🧦</h3>
+                <div className="analysis-grid">
+                  <div className="analysis-item"><span className="analysis-label">Color:</span><span className="analysis-value">{sockDetails.color}</span></div>
+                  <div className="analysis-item"><span className="analysis-label">Pattern:</span><span className="analysis-value">{sockDetails.pattern}</span></div>
+                  <div className="analysis-item"><span className="analysis-label">Size:</span><span className="analysis-value">{sockDetails.size}</span></div>
+                  <div className="analysis-item"><span className="analysis-label">Emotional State:</span><span className="analysis-value">{sockDetails.mood}</span></div>
+                </div>
+                <button className="find-match-button" onClick={handleFindMatch}>
+                  <span>Find My Sock's Soulmate!</span>
+                  <span className="button-emoji">💕</span>
+                </button>
               </div>
-              <button className="find-match-button" onClick={handleFindMatch}>
-                <span>Find My Sock's Soulmate!</span>
-                <span className="button-emoji">💕</span>
-              </button>
-            </div>
+            </>
           )}
         </div>
       </div>
