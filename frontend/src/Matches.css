@@ -277,3 +277,183 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: 60px;
+}
+
+.loading-state .spinner {
+  font-size: 80px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-state p {
+  margin-top: 20px;
+  font-size: 18px;
+  color: #64748b;
+}
+
+/* Deliberation Summary */
+.deliberation-summary {
+  background: linear-gradient(135deg, rgba(88, 86, 214, 0.1) 0%, rgba(72, 52, 212, 0.05) 100%);
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 40px;
+  border: 2px solid rgba(88, 86, 214, 0.2);
+}
+
+.deliberation-summary h3 {
+  font-size: 20px;
+  color: #0f172a;
+  margin-bottom: 15px;
+}
+
+.deliberation-summary p {
+  color: #475569;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.deliberation-stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.deliberation-stats .stat {
+  background: white;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5856d6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.transcript-toggle {
+  background: linear-gradient(135deg, #4834d4 0%, #5856d6 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.transcript-toggle:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(88, 86, 214, 0.4);
+}
+
+/* Transcript Section */
+.transcript-section {
+  background: #0f172a;
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 40px;
+  color: white;
+}
+
+.transcript-section h3 {
+  font-size: 20px;
+  margin-bottom: 20px;
+  color: #f1f5f9;
+}
+
+.transcript-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.transcript-entry {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 20px;
+  border-left: 4px solid #5856d6;
+}
+
+.transcript-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.transcript-header .agent-name {
+  font-weight: 700;
+  color: #a5b4fc;
+  font-size: 14px;
+}
+
+.transcript-header .timestamp {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.transcript-analysis {
+  color: #e2e8f0;
+  line-height: 1.6;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.transcript-meta {
+  display: flex;
+  gap: 20px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.transcript-totals {
+  display: flex;
+  justify-content: flex-end;
+  gap: 30px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+  color: #a5b4fc;
+}
+
+/* Match Specs */
+.match-specs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.match-specs .spec-tag {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+@media (max-width: 768px) {
+  .deliberation-stats {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .transcript-totals {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}

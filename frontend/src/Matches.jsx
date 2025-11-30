@@ -1,52 +1,126 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './Matches.css';
 
-function Matches({ onNavigate }) {
-  const [selectedMatch, setSelectedMatch] = useState(null);
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
 
-  // Generate ridiculous sock matches
-  const matches = [
-    {
-      id: 1,
-      image: '🧦',
-      compatibility: 98,
-      name: 'Stripy McStripeface',
-      location: 'Behind the dryer, 2.3 miles away',
-      lastSeen: '3 days ago',
-      personality: 'Adventurous and slightly wrinkled',
-      hobbies: ['Hiding', 'Static electricity', 'Tumbling']
-    },
-    {
-      id: 2,
-      image: '🧦',
-      compatibility: 87,
-      name: 'Sir Sockington III',
-      location: 'Under the bed, 0.8 miles away',
-      lastSeen: '1 week ago',
-      personality: 'Distinguished and dusty',
-      hobbies: ['Collecting lint', 'Being formal', 'Avoiding laundry day']
-    },
-    {
-      id: 3,
-      image: '🧦',
-      compatibility: 76,
-      name: 'Socky Balboa',
-      location: 'In the gym bag, 5.1 miles away',
-      lastSeen: '2 hours ago',
-      personality: 'Athletic and slightly smelly',
-      hobbies: ['Working out', 'Absorbing sweat', 'Motivational speeches']
-    },
-    {
-      id: 4,
-      image: '🧦',
-      compatibility: 65,
-      name: 'The Mysterious Stranger',
-      location: 'Unknown dimension',
-      lastSeen: 'Never',
-      personality: 'Enigmatic and possibly imaginary',
-      hobbies: ['Disappearing', 'Quantum tunneling', 'Existential crisis']
+function Matches({ onNavigate, sockId }) {
+  const [selectedMatch, setSelectedMatch] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [matchData, setMatchData] = useState(null);
+  const [transcript, setTranscript] = useState(null);
+  const [showTranscript, setShowTranscript] = useState(false);
+
+  useEffect(() => {
+    if (!sockId) {
+      setLoading(false);
+      return;
     }
-  ];
+
+    const fetchResults = async () => {
+      try {
+        // Fetch matches and agent deliberation
+        const [matchRes, transcriptRes] = await Promise.all([
+          fetch(`${BACKEND_URL}/api/socks/${sockId}/matches`),
+          fetch(`${BACKEND_URL}/api/socks/${sockId}/transcript`)
+        ]);
+
+        if (matchRes.ok) {
+          const data = await matchRes.json();
+          setMatchData(data);
+        }
+
+        if (transcriptRes.ok) {
+          const data = await transcriptRes.json();
+          setTranscript(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch results:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResults();
+  }, [sockId]);
+
+  // Generate display matches from real data or fallback
+  const generateMatches = () => {
+    const sockNames = [
+      'Stripy McStripeface', 'Sir Sockington III', 'Socky Balboa', 
+      'The Mysterious Stranger', 'Count Sockula', 'Sock Norris'
+    ];
+    const locations = [
+      'Behind the dryer, 2.3 miles away',
+      'Under the bed, 0.8 miles away',
+      'In the gym bag, 5.1 miles away',
+      'Unknown dimension',
+      'Laundry basket, 0.1 miles away',
+      'Couch cushions, 1.2 miles away'
+    ];
+    const personalities = [
+      'Adventurous and slightly wrinkled',
+      'Distinguished and dusty',
+      'Athletic and slightly smelly',
+      'Enigmatic and possibly imaginary',
+      'Mysterious and nocturnal',
+      'Tough but secretly soft'
+    ];
+    const hobbiesOptions = [
+      ['Hiding', 'Static electricity', 'Tumbling'],
+      ['Collecting lint', 'Being formal', 'Avoiding laundry day'],
+      ['Working out', 'Absorbing sweat', 'Motivational speeches'],
+      ['Disappearing', 'Quantum tunneling', 'Existential crisis'],
+      ['Night walks', 'Dramatic entrances', 'Avoiding sunlight'],
+      ['Roundhouse kicks', 'Being tough', 'Protecting feet']
+    ];
+
+    if (matchData?.matches?.length > 0) {
+      return matchData.matches.map((match, idx) => ({
+        id: match.id,
+        image: '🧦',
+        compatibility: match.compatibilityScore || (98 - idx * 11),
+        name: sockNames[idx % sockNames.length],
+        color: match.color,
+        size: match.size,
+        location: locations[idx % locations.length],
+        lastSeen: ['3 days ago', '1 week ago', '2 hours ago', 'Never'][idx % 4],
+        personality: personalities[idx % personalities.length],
+        hobbies: hobbiesOptions[idx % hobbiesOptions.length]
+      }));
+    }
+
+    // Fallback mock data
+    return sockNames.slice(0, 4).map((name, idx) => ({
+      id: idx + 1,
+      image: '🧦',
+      compatibility: 98 - idx * 11,
+      name,
+      location: locations[idx],
+      lastSeen: ['3 days ago', '1 week ago', '2 hours ago', 'Never'][idx],
+      personality: personalities[idx],
+      hobbies: hobbiesOptions[idx]
+    }));
+  };
+
+  const matches = generateMatches();
+
+  if (loading) {
+    return (
+      <div className="matches-container">
+        <div className="background-animation">
+          {[...Array(50)].map((_, i) => (
+            <div key={i} className="floating-sock">🧦</div>
+          ))}
+        </div>
+        <div className="matches-card">
+          <div className="loading-state">
+            <div className="spinner">🧦</div>
+            <p>Fetching your sock's soulmates...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="matches-container">
@@ -61,12 +135,55 @@ function Matches({ onNavigate }) {
           ← Back to Upload
         </button>
 
-        <h1 className="matches-title">
-          Your Sole Mates! 💕
-        </h1>
+        <h1 className="matches-title">Your Sole Mates! 💕</h1>
         <p className="matches-subtitle">
           We found {matches.length} potential matches for your lonely sock
         </p>
+
+        {/* Agent Deliberation Summary */}
+        {matchData && (
+          <div className="deliberation-summary">
+            <h3>🤖 Committee Verdict</h3>
+            <p>{matchData.deliberationSummary}</p>
+            <div className="deliberation-stats">
+              <span className="stat">⏱️ Processing: {(matchData.processingTime / 1000).toFixed(1)}s</span>
+              <span className="stat">💰 Cost: {matchData.estimatedCost}</span>
+              <span className="stat">✅ Votes: {matchData.agentVotes?.length || 5}/5</span>
+            </div>
+            <button 
+              className="transcript-toggle"
+              onClick={() => setShowTranscript(!showTranscript)}
+            >
+              {showTranscript ? '📕 Hide' : '📖 Show'} Full Deliberation Transcript
+            </button>
+          </div>
+        )}
+
+        {/* Full Transcript */}
+        {showTranscript && transcript && (
+          <div className="transcript-section">
+            <h3>📜 Agent Deliberation Transcript</h3>
+            <div className="transcript-list">
+              {transcript.transcript.map((entry, idx) => (
+                <div key={idx} className="transcript-entry">
+                  <div className="transcript-header">
+                    <span className="agent-name">{entry.agent}</span>
+                    <span className="timestamp">{new Date(entry.timestamp).toLocaleTimeString()}</span>
+                  </div>
+                  <p className="transcript-analysis">{entry.analysis}</p>
+                  <div className="transcript-meta">
+                    <span>🎫 Tokens: {entry.tokenUsage}</span>
+                    <span>💵 Cost: ${entry.cost.toFixed(4)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="transcript-totals">
+              <span>📊 Total Tokens: {transcript.totalTokens}</span>
+              <span>💰 Total Cost: ${transcript.totalCost.toFixed(4)}</span>
+            </div>
+          </div>
+        )}
 
         <div className="matches-grid">
           {matches.map((match) => (
@@ -83,6 +200,12 @@ function Matches({ onNavigate }) {
               </div>
               
               <h3 className="match-name">{match.name}</h3>
+              {match.color && match.size && (
+                <div className="match-specs">
+                  <span className="spec-tag">{match.color}</span>
+                  <span className="spec-tag">{match.size}</span>
+                </div>
+              )}
               
               <div className="match-details">
                 <div className="detail-item">
@@ -117,9 +240,7 @@ function Matches({ onNavigate }) {
         </div>
 
         <div className="no-match-section">
-          <p className="no-match-text">
-            Don't see your match? 🤔
-          </p>
+          <p className="no-match-text">Don't see your match? 🤔</p>
           <button className="upload-another-button" onClick={() => onNavigate('upload')}>
             <span>Upload Another Sock</span>
             <span className="button-emoji">🧦</span>
