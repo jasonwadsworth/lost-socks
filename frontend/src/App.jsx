@@ -1,12 +1,8 @@
 import React from 'react';
+import Login from './Login';
 
 function App() {
-  return (
-    <div className="App">
-      <h1>Sock Matcher</h1>
-      <p>Coming soon...</p>
-    </div>
-  );
+  return <Login />;
 }
 
 export default App;
