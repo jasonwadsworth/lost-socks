@@ -45,9 +45,13 @@
 
 .floating-sock {
   position: absolute;
-  font-size: 45px;
-  opacity: 0.12;
+  opacity: 0.15;
   animation: float-sock 25s infinite ease-in-out;
+}
+
+.floating-sock-img {
+  width: 60px;
+  height: auto;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
 }
 
@@ -288,19 +292,22 @@
   margin-bottom: 30px;
 }
 
-.sock-icon {
-  font-size: 80px;
+.sock-icon-img {
+  width: 100px;
+  height: auto;
   display: inline-block;
   animation: bounce 2s ease-in-out infinite;
   filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
 }
 
-.sock-icon-pair {
-  font-size: 80px;
+.sock-icon-img-pair {
+  width: 100px;
+  height: auto;
   display: inline-block;
   animation: bounce 2s ease-in-out infinite 0.3s;
   filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
   margin-left: -20px;
+  transform: scaleX(-1);
 }
 
 @keyframes bounce {
@@ -308,24 +315,7 @@
   50% { transform: translateY(-20px) rotate(5deg); }
 }
 
-.sparkle {
-  position: absolute;
-  font-size: 30px;
-  top: -10px;
-  right: -10px;
-  animation: sparkle 2s ease-in-out infinite;
-}
 
-@keyframes sparkle {
-  0%, 100% { 
-    opacity: 0;
-    transform: scale(0.5) rotate(0deg);
-  }
-  50% { 
-    opacity: 1;
-    transform: scale(1.2) rotate(180deg);
-  }
-}
 
 .brand-title {
   font-size: 56px;
@@ -546,13 +536,14 @@
   gap: 10px;
 }
 
-.button-emoji {
-  font-size: 20px;
+.button-sock-icon {
+  width: 24px;
+  height: auto;
   display: inline-block;
   transition: transform 0.3s ease;
 }
 
-.login-button:hover .button-emoji {
+.login-button:hover .button-sock-icon {
   transform: rotate(20deg) scale(1.2);
   animation: wiggle-button 0.5s ease;
 }
