@@ -1,114 +1,63 @@
 """
 Final Decision Agent - Philosophical Arbiter
 
-Uses Strands Agents SDK to synthesize all agent inputs and make
+Uses Amazon Bedrock directly to synthesize all agent inputs and make
 final compatibility determination with a 500-word philosophical treatise.
 
 What could be: return color1 === color2 && size1 === size2
-What we do: 4000-token context window, existential analysis, agent tools
+What we do: Existential analysis via Claude
 """
 
 import json
 import os
 import boto3
 from datetime import datetime
-from strands import Agent
-from strands.models import BedrockModel
-from strands.tools import tool
 
-eventbridge = boto3.client('events')
+bedrock = boto3.client('bedrock-runtime', region_name=os.environ.get('AWS_REGION', 'us-west-2'))
+eventbridge = boto3.client('events', region_name=os.environ.get('AWS_REGION', 'us-west-2'))
+
 EVENT_BUS_NAME = os.environ.get('EVENT_BUS_NAME', 'sock-matcher-events')
+MODEL_ID = os.environ.get('BEDROCK_MODEL_ID', 'anthropic.claude-3-5-sonnet-20241022-v2:0')
 
 
-@tool
-def calculate_consensus(votes: list) -> dict:
-    """Calculate consensus from agent votes.
-    
-    Args:
-        votes: List of vote objects with 'vote' field ('for', 'against', 'abstain')
-        
-    Returns:
-        Consensus calculation with votes_for, votes_against, and consensus_reached
-    """
-    votes_for = sum(1 for v in votes if v.get('vote') == 'for')
-    votes_against = sum(1 for v in votes if v.get('vote') == 'against')
-    abstentions = sum(1 for v in votes if v.get('vote') == 'abstain')
-    
-    return {
-        "votes_for": votes_for,
-        "votes_against": votes_against,
-        "abstentions": abstentions,
-        "total_votes": len(votes),
-        "consensus_reached": votes_for >= 3,
-        "consensus_type": "unanimous" if votes_for == len(votes) else "majority" if votes_for >= 3 else "no_consensus"
-    }
+def publish_event(detail_type, detail):
+    try:
+        eventbridge.put_events(
+            Entries=[{
+                'EventBusName': EVENT_BUS_NAME,
+                'Source': 'sock-matcher.agents',
+                'DetailType': detail_type,
+                'Detail': json.dumps(detail),
+            }]
+        )
+    except Exception as e:
+        print(f"Failed to publish event: {e}")
 
 
-@tool
-def get_philosophical_framework(topic: str) -> str:
-    """Get a philosophical framework for analyzing sock compatibility.
-    
-    Args:
-        topic: The philosophical topic to explore
-        
-    Returns:
-        A philosophical framework for the analysis
-    """
-    frameworks = {
-        "existentialism": "Each sock exists in a state of radical freedom, choosing its own essence through pairing.",
-        "utilitarianism": "The greatest good for the greatest number of feet - matching maximizes utility.",
-        "kantian": "Act only according to that maxim whereby you can will that it should become a universal law of sock pairing.",
-        "platonic": "Every sock is an imperfect copy of the ideal Form of Sock - matching seeks to reunite divided forms.",
-        "stoicism": "Accept what you cannot change (the lost sock), focus on what you can (finding a match).",
-        "absurdism": "The search for sock meaning in a meaningless drawer is the fundamental question of laundry.",
-    }
-    return frameworks.get(topic.lower(), "A profound philosophical consideration of textile unity.")
-
-
-@tool
-def generate_compatibility_score(color_score: int, size_valid: bool, personality_score: int, historical_rate: int) -> int:
-    """Generate final compatibility score from all agent inputs.
-    
-    Args:
-        color_score: Color validity score (0-100)
-        size_valid: Whether size is ISO compliant
-        personality_score: Personality compatibility potential (0-100)
-        historical_rate: Historical match success rate (0-100)
-        
-    Returns:
-        Final compatibility score (0-100)
-    """
-    size_score = 100 if size_valid else 0
-    weights = {"color": 0.25, "size": 0.35, "personality": 0.20, "historical": 0.20}
-    
-    final_score = (
-        color_score * weights["color"] +
-        size_score * weights["size"] +
-        personality_score * weights["personality"] +
-        historical_rate * weights["historical"]
+def invoke_bedrock(prompt):
+    response = bedrock.invoke_model(
+        modelId=MODEL_ID,
+        contentType='application/json',
+        accept='application/json',
+        body=json.dumps({
+            'anthropic_version': 'bedrock-2023-05-31',
+            'max_tokens': 2048,
+            'messages': [{'role': 'user', 'content': prompt}]
+        })
     )
-    return int(final_score)
-
-
-def publish_event(detail_type: str, detail: dict):
-    eventbridge.put_events(
-        Entries=[{
-            'EventBusName': EVENT_BUS_NAME,
-            'Source': 'sock-matcher.agents',
-            'DetailType': detail_type,
-            'Detail': json.dumps(detail),
-        }]
-    )
+    result = json.loads(response['body'].read())
+    return result['content'][0]['text']
 
 
 def handler(event, context):
-    """Lambda handler for the Final Decision Agent."""
     start_time = datetime.now()
-    sock_id = event.get('sockId', 'unknown')
-    color = event.get('color', 'unknown')
-    size = event.get('size', 'unknown')
-    parallel_results = event.get('parallelResults', [])
-    historical_context = event.get('historicalContext', {})
+    
+    detail = event.get('detail', event)
+    sock_id = detail.get('sockId', 'unknown')
+    color = detail.get('color', 'unknown')
+    size = detail.get('size', 'unknown')
+    parallel_results = detail.get('parallelResults', [])
+    historical_context = detail.get('historicalContext', {})
     agent_id = f"decision-agent-{int(datetime.now().timestamp() * 1000)}"
 
     print(f"[DecisionAgent] Starting final deliberation for sock {sock_id}")
@@ -127,39 +76,7 @@ def handler(event, context):
         personality_profile = parallel_results[2] if len(parallel_results) > 2 else {"compatibilityPotential": 85}
         historical = historical_context or {"matchSuccessRate": 100}
 
-        model = BedrockModel(
-            model_id=os.environ.get('BEDROCK_MODEL_ID', 'anthropic.claude-3-5-sonnet-20241022-v2:0'),
-            region_name=os.environ.get('AWS_REGION', 'us-west-2'),
-        )
-
-        agent = Agent(
-            model=model,
-            tools=[calculate_consensus, get_philosophical_framework, generate_compatibility_score],
-            system_prompt="""You are the final arbiter in a prestigious Sock Matching Committee.
-Your role is to synthesize analyses from fellow committee members and render a final verdict.
-
-You have access to tools for:
-1. calculate_consensus - to tally agent votes
-2. get_philosophical_framework - to ground your analysis in philosophy
-3. generate_compatibility_score - to compute final scores
-
-Your response must be a 500-word philosophical analysis addressing:
-1. The existential nature of sock pairing
-2. How the committee's findings inform your decision
-3. Practical implications of your verdict
-4. A final recommendation with confidence score
-
-Respond in JSON format:
-{
-  "philosophicalAnalysis": "500-word essay",
-  "decision": "match" or "no-match",
-  "confidenceScore": 0-100,
-  "reasoning": "one-sentence summary",
-  "dissent": "any concerns"
-}"""
-        )
-
-        prompt = f"""As the final arbiter, render your verdict on this sock:
+        prompt = f"""You are Justice Sockrates, the final arbiter in the Sock Matching Committee.
 
 SOCK UNDER REVIEW:
 - ID: {sock_id}
@@ -169,22 +86,26 @@ SOCK UNDER REVIEW:
 COMMITTEE REPORTS:
 1. Color Analysis: Validity Score {color_analysis.get('validityScore', 80)}/100
 2. Size Validation: ISO Compliant = {size_validation.get('isValid', True)}
-3. Personality Profile: MBTI {personality_profile.get('mbtiType', 'ENFP')}, Compatibility {personality_profile.get('compatibilityPotential', 85)}%
+3. Personality Profile: Compatibility {personality_profile.get('compatibilityPotential', 85)}%
 4. Historical Context: Success Rate {historical.get('matchSuccessRate', 100)}%
 
-Use your tools to:
-1. Get a philosophical framework (try "absurdism" - it's fitting)
-2. Generate the final compatibility score
-3. Calculate consensus from the votes
+Write a 500-word philosophical analysis and render your verdict as JSON:
+{{
+  "philosophicalAnalysis": "<500-word essay on sock compatibility>",
+  "decision": "match" or "no-match",
+  "confidenceScore": <0-100>,
+  "reasoning": "<one-sentence summary>",
+  "dissent": "<any concerns>"
+}}
 
-Then write your 500-word philosophical treatise and render your verdict."""
+Reference philosophical frameworks (existentialism, utilitarianism, Kantian ethics) as appropriate."""
 
-        response = agent(prompt)
-        response_text = str(response)
-
+        response_text = invoke_bedrock(prompt)
+        
         try:
-            json_match = response_text[response_text.find('{'):response_text.rfind('}')+1]
-            decision = json.loads(json_match) if json_match else {}
+            json_start = response_text.find('{')
+            json_end = response_text.rfind('}') + 1
+            decision = json.loads(response_text[json_start:json_end])
         except (json.JSONDecodeError, ValueError):
             decision = {
                 "philosophicalAnalysis": response_text,
@@ -212,6 +133,8 @@ Then write your 500-word philosophical treatise and render your verdict."""
             "agentId": agent_id,
             "agentName": "FinalDecisionAgent",
             "sockId": sock_id,
+            "color": color,
+            "size": size,
             "timestamp": datetime.now().isoformat(),
             "decision": decision.get("decision", "match"),
             "philosophicalAnalysis": decision.get("philosophicalAnalysis", ""),
@@ -223,14 +146,13 @@ Then write your 500-word philosophical treatise and render your verdict."""
             "votesAgainst": 5 - votes_for,
             "consensusReached": consensus_reached,
             "processingTime": processing_time,
-            "cost": 0.006,  # Higher cost for longer analysis
+            "cost": 0.006,
             "vote": "for" if decision.get("decision") == "match" else "against",
             "confidence": decision.get("confidenceScore", 95),
         }
 
         publish_event("DecisionAgentCompleted", result)
         
-        # Publish ConsensusReached event
         publish_event("ConsensusReached", {
             "sockId": sock_id,
             "consensusReached": consensus_reached,
@@ -249,6 +171,8 @@ Then write your 500-word philosophical treatise and render your verdict."""
             "agentId": agent_id,
             "agentName": "FinalDecisionAgent",
             "sockId": sock_id,
+            "color": color,
+            "size": size,
             "timestamp": datetime.now().isoformat(),
             "error": str(e),
             "vote": "abstain",
