@@ -84,7 +84,7 @@
   - Test error cases (invalid input, not found, timeouts)
   - _Requirements: 1.1, 3.1_
 
-- [ ] 7. Implement WebSocket real-time updates
+- [x] 7. Implement WebSocket real-time updates
   - Set up Socket.io server integration with Express
   - Subscribe to EventBridge agent events via Lambda → WebSocket broadcaster
   - Emit agent:started events when agents begin

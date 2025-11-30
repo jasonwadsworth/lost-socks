@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge';
 import { SFNClient, StartExecutionCommand, DescribeExecutionCommand } from '@aws-sdk/client-sfn';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,6 +9,14 @@ import SockRepository from './repositories/SockRepository.js';
 import SockService from './services/SockService.js';
 
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 
 // AWS Clients
@@ -24,24 +34,194 @@ const sockService = new SockService(sockRepository);
 // Track workflow executions
 const workflowExecutions = new Map();
 
+// Track connected clients by sockId
+const sockSubscriptions = new Map();
+
 app.use(cors());
 app.use(express.json());
 
+// Socket.io connection handling
+io.on('connection', (socket) => {
+  console.log(`🔌 Client connected: ${socket.id}`);
+  
+  socket.on('subscribe', (sockId) => {
+    console.log(`📡 Client ${socket.id} subscribed to sock ${sockId}`);
+    socket.join(`sock:${sockId}`);
+    
+    // Track subscription
+    if (!sockSubscriptions.has(sockId)) {
+      sockSubscriptions.set(sockId, new Set());
+    }
+    sockSubscriptions.get(sockId).add(socket.id);
+  });
+  
+  socket.on('unsubscribe', (sockId) => {
+    socket.leave(`sock:${sockId}`);
+    sockSubscriptions.get(sockId)?.delete(socket.id);
+  });
+  
+  socket.on('disconnect', () => {
+    console.log(`🔌 Client disconnected: ${socket.id}`);
+  });
+});
+
+// Emit agent events to subscribed clients
+function emitAgentEvent(sockId, event, data) {
+  io.to(`sock:${sockId}`).emit(event, data);
+  console.log(`📤 Emitted ${event} for sock ${sockId}`);
+}
+
+// Simulate agent workflow with real-time updates
+async function simulateAgentWorkflow(sockId, sock) {
+  const agents = [
+    { id: 'color', name: 'Dr. Chromatius', role: 'Color Analysis', emoji: '🎨', duration: 4000 },
+    { id: 'size', name: 'ISO Expert', role: 'Size Validation', emoji: '📏', duration: 3000 },
+    { id: 'personality', name: 'Prof. Sockmund Freud', role: 'Personality Analysis', emoji: '🔮', duration: 5000 },
+    { id: 'historical', name: 'Data Archaeologist', role: 'Historical Context', emoji: '📊', duration: 3500 },
+    { id: 'decision', name: 'Justice Sockrates', role: 'Final Decision', emoji: '⚖️', duration: 4500 },
+  ];
+
+  const workflow = workflowExecutions.get(sockId);
+  let totalCost = 0;
+  let totalTokens = 0;
+
+  for (let i = 0; i < agents.length; i++) {
+    const agent = agents[i];
+    const progress = Math.round(((i) / agents.length) * 100);
+
+    // Emit agent:started
+    emitAgentEvent(sockId, 'agent:started', {
+      sockId,
+      agent: agent.id,
+      agentName: agent.name,
+      role: agent.role,
+      emoji: agent.emoji,
+      progress,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Simulate thinking time with progress updates
+    const steps = 5;
+    for (let step = 0; step < steps; step++) {
+      await new Promise(resolve => setTimeout(resolve, agent.duration / steps));
+      
+      const stepProgress = progress + Math.round(((step + 1) / steps) * (100 / agents.length));
+      emitAgentEvent(sockId, 'agent:progress', {
+        sockId,
+        agent: agent.id,
+        progress: Math.min(stepProgress, 100),
+        thinking: getThinkingMessage(agent.id, step),
+      });
+    }
+
+    // Generate agent result
+    const tokens = Math.floor(Math.random() * 500) + 200;
+    const cost = tokens * 0.000004;
+    totalTokens += tokens;
+    totalCost += cost;
+
+    // Emit agent:completed
+    emitAgentEvent(sockId, 'agent:completed', {
+      sockId,
+      agent: agent.id,
+      agentName: agent.name,
+      result: generateAgentResult(agent.id, sock),
+      tokens,
+      cost: cost.toFixed(6),
+      progress: Math.round(((i + 1) / agents.length) * 100),
+      timestamp: new Date().toISOString(),
+    });
+
+    // Update workflow
+    if (workflow) {
+      workflow.agentResults[agent.id] = {
+        completed: true,
+        tokens,
+        cost,
+      };
+    }
+  }
+
+  // Emit workflow:complete
+  emitAgentEvent(sockId, 'workflow:complete', {
+    sockId,
+    status: 'complete',
+    totalTokens,
+    totalCost: totalCost.toFixed(6),
+    timestamp: new Date().toISOString(),
+    verdict: 'MATCHABLE',
+    confidence: 98,
+  });
+
+  if (workflow) {
+    workflow.status = 'complete';
+  }
+}
+
+function getThinkingMessage(agentId, step) {
+  const messages = {
+    color: [
+      'Analyzing RGB values...',
+      'Consulting color theory database...',
+      'Evaluating cultural significance...',
+      'Computing chromatic harmony...',
+      'Finalizing color assessment...',
+    ],
+    size: [
+      'Loading ISO 3635:1981 standards...',
+      'Measuring dimensional compliance...',
+      'Cross-referencing size charts...',
+      'Validating foot coverage metrics...',
+      'Certifying size validity...',
+    ],
+    personality: [
+      'Conducting Rorschach analysis...',
+      'Evaluating attachment style...',
+      'Computing MBTI profile...',
+      'Analyzing emotional resonance...',
+      'Synthesizing personality report...',
+    ],
+    historical: [
+      'Querying historical database...',
+      'Running Monte Carlo simulation...',
+      'Analyzing seasonal patterns...',
+      'Computing trend vectors...',
+      'Generating predictive model...',
+    ],
+    decision: [
+      'Gathering committee reports...',
+      'Weighing evidence...',
+      'Consulting philosophical frameworks...',
+      'Deliberating on existential implications...',
+      'Rendering final verdict...',
+    ],
+  };
+  return messages[agentId]?.[step] || 'Processing...';
+}
+
+function generateAgentResult(agentId, sock) {
+  const results = {
+    color: `Color "${sock.color}" validated. Cultural significance: HIGH. Chromatic harmony: EXCELLENT.`,
+    size: `Size "${sock.size}" complies with ISO 3635:1981. Foot coverage: OPTIMAL.`,
+    personality: `MBTI Type: ENFP. Zodiac: Sagittarius. Compatibility potential: HIGH.`,
+    historical: `Historical match rate: 94.7%. Trend: UPWARD. Seasonal affinity: STRONG.`,
+    decision: `VERDICT: FULLY MATCHABLE. Consensus: UNANIMOUS. Confidence: 98%.`,
+  };
+  return results[agentId] || 'Analysis complete.';
+}
+
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', eventBus: EVENT_BUS_NAME });
+  res.json({ status: 'ok', eventBus: EVENT_BUS_NAME, websocket: 'enabled' });
 });
 
 /**
  * POST /api/socks
  * Register a new sock and trigger the AI agent committee
- * Request body: { color: string, size: string }
- * Response: { id: string, color: string, size: string, workflowId: string, status: string }
  */
 app.post('/api/socks', async (req, res) => {
   try {
     const { color, size } = req.body;
 
-    // Input validation
     if (!color || typeof color !== 'string' || color.trim() === '') {
       return res.status(400).json({
         error: 'Invalid input: color is required and must be a non-empty string'
@@ -54,12 +234,10 @@ app.post('/api/socks', async (req, res) => {
       });
     }
 
-    // Create sock using service (local storage)
     const sock = sockService.createSock(color.trim(), size.trim());
     const workflowId = `workflow-${sock.id}`;
 
-    // Publish SockSubmitted event to EventBridge
-    // This triggers the magnificently over-engineered agent committee!
+    // Publish to EventBridge
     try {
       await eventBridge.send(new PutEventsCommand({
         Entries: [{
@@ -78,16 +256,17 @@ app.post('/api/socks', async (req, res) => {
       console.log(`[Backend] Published SockSubmitted event for sock ${sock.id}`);
     } catch (eventError) {
       console.error('[Backend] Failed to publish event:', eventError.message);
-      // Continue anyway - the sock is still created locally
     }
 
-    // Track the workflow
     workflowExecutions.set(sock.id, {
       workflowId,
       status: 'pending',
       startedAt: new Date().toISOString(),
       agentResults: {},
     });
+
+    // Start the simulated agent workflow (runs in background)
+    simulateAgentWorkflow(sock.id, sock);
 
     res.status(201).json({
       id: sock.id,
@@ -96,7 +275,7 @@ app.post('/api/socks', async (req, res) => {
       workflowId,
       status: 'pending',
       message: 'Sock submitted! The AI agent committee is now deliberating...',
-      estimatedTime: '30-60 seconds',
+      estimatedTime: '20-30 seconds',
     });
   } catch (error) {
     console.error('Error creating sock:', error);
@@ -104,10 +283,10 @@ app.post('/api/socks', async (req, res) => {
   }
 });
 
+
 /**
  * GET /api/socks/:id/status
  * Get the status of the agent workflow for a sock
- * Response: { status: string, currentAgent: string, progress: number, agentResults: object }
  */
 app.get('/api/socks/:id/status', async (req, res) => {
   try {
@@ -118,16 +297,15 @@ app.get('/api/socks/:id/status', async (req, res) => {
       return res.status(404).json({ error: 'Workflow not found' });
     }
 
-    // Simulate agent progress (in production, query Step Functions or DynamoDB)
     const elapsed = Date.now() - new Date(workflow.startedAt).getTime();
     const agents = ['ColorAgent', 'SizeAgent', 'PersonalityAgent', 'HistoricalAgent', 'DecisionAgent'];
-    const agentDuration = 6000; // 6 seconds per agent
+    const agentDuration = 4000;
     
     const completedAgents = Math.min(Math.floor(elapsed / agentDuration), 5);
     const currentAgentIndex = Math.min(completedAgents, 4);
     const progress = Math.min((elapsed / (agentDuration * 5)) * 100, 100);
 
-    const status = completedAgents >= 5 ? 'complete' : 'analyzing';
+    const status = workflow.status === 'complete' ? 'complete' : (completedAgents >= 5 ? 'complete' : 'analyzing');
     const currentAgent = status === 'complete' ? 'None' : agents[currentAgentIndex];
 
     res.json({
@@ -137,7 +315,7 @@ app.get('/api/socks/:id/status', async (req, res) => {
       currentAgent,
       progress: Math.round(progress),
       completedAgents: agents.slice(0, completedAgents),
-      estimatedTimeRemaining: status === 'complete' ? 0 : Math.max(0, 30 - Math.floor(elapsed / 1000)),
+      estimatedTimeRemaining: status === 'complete' ? 0 : Math.max(0, 20 - Math.floor(elapsed / 1000)),
       agentResults: workflow.agentResults,
     });
   } catch (error) {
@@ -149,13 +327,11 @@ app.get('/api/socks/:id/status', async (req, res) => {
 /**
  * GET /api/socks/:id/matches
  * Get all matching socks for a given sock ID
- * Response: { matches: [...], deliberationSummary: string, agentVotes: [...] }
  */
 app.get('/api/socks/:id/matches', (req, res) => {
   try {
     const { id } = req.params;
 
-    // Validate ID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(id)) {
       return res.status(400).json({
@@ -171,7 +347,6 @@ app.get('/api/socks/:id/matches', (req, res) => {
     const matches = sockService.findMatches(id);
     const workflow = workflowExecutions.get(id);
 
-    // Generate mock agent deliberation (in production, fetch from DynamoDB)
     const agentVotes = [
       { agent: 'ColorAnalysisAgent', vote: 'for', confidence: 95, reasoning: 'Color is valid and culturally significant' },
       { agent: 'SizeValidationAgent', vote: 'for', confidence: 100, reasoning: 'Size complies with ISO 3635:1981' },
@@ -211,7 +386,6 @@ app.get('/api/socks/:id/transcript', (req, res) => {
     return res.status(404).json({ error: 'Sock not found' });
   }
 
-  // Generate mock transcript (in production, fetch from DynamoDB event store)
   res.json({
     sockId: id,
     transcript: [
@@ -256,13 +430,15 @@ app.get('/api/socks/:id/transcript', (req, res) => {
   });
 });
 
-// Only start server if not in test mode
+// Start server with Socket.io
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
+  httpServer.listen(PORT, () => {
     console.log(`🧦 Sock Matcher Backend running on port ${PORT}`);
     console.log(`📡 EventBridge bus: ${EVENT_BUS_NAME}`);
+    console.log(`🔌 WebSocket server enabled`);
     console.log(`🤖 Ready to orchestrate the AI agent committee!`);
   });
 }
 
 export default app;
+export { io };

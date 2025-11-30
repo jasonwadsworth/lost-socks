@@ -1,5 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { io } from 'socket.io-client';
 import './AgentProgressTracker.css';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
 
 const AGENTS = [
   { id: 'color', name: 'Dr. Chromatius', role: 'Color Analysis', emoji: '🎨', description: 'PhD in Chromatics' },
@@ -17,46 +20,108 @@ function AgentProgressTracker({ sockId, onComplete }) {
     estimatedTimeRemaining: 30,
   });
   const [agentResults, setAgentResults] = useState({});
+  const [thinkingMessage, setThinkingMessage] = useState('');
   const [isComplete, setIsComplete] = useState(false);
+  const [totalCost, setTotalCost] = useState(0);
+  const [totalTokens, setTotalTokens] = useState(0);
+  const [connected, setConnected] = useState(false);
+  const socketRef = useRef(null);
 
   useEffect(() => {
     if (!sockId) return;
 
-    const pollStatus = async () => {
-      try {
-        const res = await fetch(`http://localhost:3001/api/socks/${sockId}/status`);
-        if (!res.ok) return;
-        
-        const data = await res.json();
-        setStatus({
-          currentAgent: data.currentAgent,
-          completedAgents: data.completedAgents || [],
-          progress: data.progress || 0,
-          estimatedTimeRemaining: data.estimatedTimeRemaining || 0,
-        });
+    // Connect to WebSocket
+    const socket = io(BACKEND_URL, {
+      transports: ['websocket', 'polling'],
+    });
+    socketRef.current = socket;
 
-        if (data.status === 'complete') {
-          setIsComplete(true);
-          if (onComplete) onComplete();
+    socket.on('connect', () => {
+      console.log('🔌 Connected to WebSocket');
+      setConnected(true);
+      socket.emit('subscribe', sockId);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('🔌 Disconnected from WebSocket');
+      setConnected(false);
+    });
+
+    socket.on('agent:started', (data) => {
+      console.log('🚀 Agent started:', data);
+      setStatus(prev => ({
+        ...prev,
+        currentAgent: data.agent,
+        progress: data.progress,
+      }));
+      setThinkingMessage(`${data.agentName} is analyzing...`);
+    });
+
+    socket.on('agent:progress', (data) => {
+      setStatus(prev => ({
+        ...prev,
+        progress: data.progress,
+      }));
+      setThinkingMessage(data.thinking);
+    });
+
+    socket.on('agent:completed', (data) => {
+      console.log('✅ Agent completed:', data);
+      setStatus(prev => ({
+        ...prev,
+        completedAgents: [...prev.completedAgents, data.agent],
+        progress: data.progress,
+        currentAgent: null,
+      }));
+      setAgentResults(prev => ({
+        ...prev,
+        [data.agent]: {
+          result: data.result,
+          tokens: data.tokens,
+          cost: parseFloat(data.cost),
+        },
+      }));
+      setTotalTokens(prev => prev + data.tokens);
+      setTotalCost(prev => prev + parseFloat(data.cost));
+    });
+
+    socket.on('workflow:complete', (data) => {
+      console.log('🎉 Workflow complete:', data);
+      setIsComplete(true);
+      setStatus(prev => ({ ...prev, progress: 100 }));
+      if (onComplete) onComplete();
+    });
+
+    // Fallback polling in case WebSocket fails
+    const pollInterval = setInterval(async () => {
+      if (isComplete) return;
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/socks/${sockId}/status`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === 'complete' && !isComplete) {
+            setIsComplete(true);
+            setStatus(prev => ({ ...prev, progress: 100 }));
+            if (onComplete) onComplete();
+          }
         }
       } catch (err) {
-        console.error('Failed to poll status:', err);
+        // Ignore polling errors
       }
+    }, 5000);
+
+    return () => {
+      socket.emit('unsubscribe', sockId);
+      socket.disconnect();
+      clearInterval(pollInterval);
     };
-
-    // Poll every 2 seconds
-    const interval = setInterval(pollStatus, 2000);
-    pollStatus(); // Initial poll
-
-    return () => clearInterval(interval);
-  }, [sockId, onComplete]);
+  }, [sockId, onComplete, isComplete]);
 
   const getAgentStatus = (agentId) => {
-    const agentName = AGENTS.find(a => a.id === agentId)?.name;
-    if (status.completedAgents.some(a => a.includes(agentId) || a.includes(agentName))) {
+    if (status.completedAgents.includes(agentId)) {
       return 'complete';
     }
-    if (status.currentAgent?.toLowerCase().includes(agentId)) {
+    if (status.currentAgent === agentId) {
       return 'active';
     }
     return 'pending';
@@ -64,7 +129,10 @@ function AgentProgressTracker({ sockId, onComplete }) {
 
   return (
     <div className="agent-tracker">
-      <h3 className="tracker-title">🤖 AI Agent Committee Deliberating...</h3>
+      <h3 className="tracker-title">
+        🤖 AI Agent Committee Deliberating...
+        {connected && <span className="ws-indicator">🟢 Live</span>}
+      </h3>
       
       <div className="progress-container">
         <div className="progress-bar">
@@ -76,9 +144,16 @@ function AgentProgressTracker({ sockId, onComplete }) {
         <span className="progress-text">{Math.round(status.progress)}%</span>
       </div>
 
+      {thinkingMessage && !isComplete && (
+        <div className="thinking-message">
+          💭 {thinkingMessage}
+        </div>
+      )}
+
       <div className="agents-grid">
-        {AGENTS.map((agent, index) => {
+        {AGENTS.map((agent) => {
           const agentStatus = getAgentStatus(agent.id);
+          const result = agentResults[agent.id];
           return (
             <div 
               key={agent.id} 
@@ -89,6 +164,14 @@ function AgentProgressTracker({ sockId, onComplete }) {
                 <div className="agent-name">{agent.name}</div>
                 <div className="agent-role">{agent.role}</div>
                 <div className="agent-description">{agent.description}</div>
+                {result && (
+                  <div className="agent-result">
+                    <div className="result-text">{result.result}</div>
+                    <div className="result-meta">
+                      🎫 {result.tokens} tokens • 💵 ${result.cost.toFixed(6)}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="agent-status-indicator">
                 {agentStatus === 'complete' && '✅'}
@@ -100,9 +183,9 @@ function AgentProgressTracker({ sockId, onComplete }) {
         })}
       </div>
 
-      {status.estimatedTimeRemaining > 0 && !isComplete && (
+      {!isComplete && (
         <div className="time-remaining">
-          ⏱️ Estimated time remaining: {status.estimatedTimeRemaining}s
+          ⏱️ Estimated time remaining: {Math.max(0, 20 - Math.floor(status.progress / 5))}s
         </div>
       )}
 
@@ -113,8 +196,8 @@ function AgentProgressTracker({ sockId, onComplete }) {
       )}
 
       <div className="cost-tracker">
-        💰 Estimated cost so far: ${(status.progress * 0.005).toFixed(3)}
-        <span className="cost-note">(vs $0.000001 for a simple query)</span>
+        💰 Total cost: ${totalCost.toFixed(6)} ({totalTokens} tokens)
+        <span className="cost-note">(vs $0.000001 for a simple if/else)</span>
       </div>
     </div>
   );
