@@ -283,37 +283,37 @@ Your verdicts should reference philosophical frameworks (existentialism, utilita
     // Wrap Bedrock Agent invocations in Lambda tasks
     const colorAgentTask = new tasks.LambdaInvoke(this, "ColorAgentTask", {
       lambdaFunction: colorActionFn,
-      outputPath: "$.Payload",
+      payloadResponseOnly: true,
       resultPath: "$.colorAnalysis",
     });
 
     const sizeAgentTask = new tasks.LambdaInvoke(this, "SizeAgentTask", {
       lambdaFunction: sizeAgentFn,
-      outputPath: "$.Payload",
+      payloadResponseOnly: true,
       resultPath: "$.sizeValidation",
     });
 
     const personalityAgentTask = new tasks.LambdaInvoke(this, "PersonalityAgentTask", {
       lambdaFunction: personalityActionFn,
-      outputPath: "$.Payload",
+      payloadResponseOnly: true,
       resultPath: "$.personalityProfile",
     });
 
     const historicalAgentTask = new tasks.LambdaInvoke(this, "HistoricalAgentTask", {
       lambdaFunction: historicalAgentFn,
-      outputPath: "$.Payload",
+      payloadResponseOnly: true,
       resultPath: "$.historicalContext",
     });
 
     const decisionAgentTask = new tasks.LambdaInvoke(this, "DecisionAgentTask", {
       lambdaFunction: decisionActionFn,
-      outputPath: "$.Payload",
+      payloadResponseOnly: true,
       resultPath: "$.finalDecision",
     });
 
     const matchSearchTask = new tasks.LambdaInvoke(this, "MatchSearchTask", {
       lambdaFunction: matchSearchFn,
-      outputPath: "$.Payload",
+      payloadResponseOnly: true,
       resultPath: "$.matches",
     });
 
