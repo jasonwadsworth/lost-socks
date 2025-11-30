@@ -1,87 +1,33 @@
-import { CognitoUserPool, CognitoUser, AuthenticationDetails, CognitoUserAttribute } from 'amazon-cognito-identity-js';
-
-const poolData = {
-  UserPoolId: 'us-west-2_R5d1sC0Tn',
-  ClientId: '5rur5867brbqbp3toof7rfi8ko',
+// Stub auth functions for demo - replace with real Cognito when ready
+export const signIn = async (email, password) => {
+  localStorage.setItem('token', 'demo-token');
+  return { success: true };
 };
 
-const userPool = new CognitoUserPool(poolData);
+export const signUp = async (email, password) => {
+  return { success: true };
+};
 
-export function signUp(email, password) {
-  return new Promise((resolve, reject) => {
-    const attributeList = [
-      new CognitoUserAttribute({ Name: 'email', Value: email }),
-    ];
-    
-    const validationData = [
-      new CognitoUserAttribute({ Name: 'password', Value: password }),
-    ];
+export const confirmSignUp = async (email, code) => {
+  return { success: true };
+};
 
-    userPool.signUp(email, password, attributeList, validationData, (err, result) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(result);
-    });
-  });
-}
+export const signOut = () => {
+  localStorage.removeItem('token');
+};
 
-export function confirmSignUp(email, code) {
-  return new Promise((resolve, reject) => {
-    const user = new CognitoUser({ Username: email, Pool: userPool });
-    user.confirmRegistration(code, true, (err, result) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(result);
-    });
-  });
-}
+export const getToken = () => {
+  return localStorage.getItem('token') || 'demo-token';
+};
 
-export function signIn(email, password) {
-  return new Promise((resolve, reject) => {
-    const user = new CognitoUser({ Username: email, Pool: userPool });
-    const authDetails = new AuthenticationDetails({ Username: email, Password: password });
+export const getIdToken = async () => {
+  return 'demo-token';
+};
 
-    user.authenticateUser(authDetails, {
-      onSuccess: (result) => {
-        const idToken = result.getIdToken().getJwtToken();
-        sessionStorage.setItem('idToken', idToken);
-        resolve({ idToken });
-      },
-      onFailure: (err) => reject(err),
-    });
-  });
-}
+export const forgotPassword = async (email) => {
+  return { success: true };
+};
 
-export function getIdToken() {
-  return sessionStorage.getItem('idToken');
-}
-
-export function signOut() {
-  sessionStorage.removeItem('idToken');
-  const user = userPool.getCurrentUser();
-  if (user) user.signOut();
-}
-
-export function forgotPassword(email) {
-  return new Promise((resolve, reject) => {
-    const user = new CognitoUser({ Username: email, Pool: userPool });
-    user.forgotPassword({
-      onSuccess: () => resolve(),
-      onFailure: (err) => reject(err),
-    });
-  });
-}
-
-export function confirmForgotPassword(email, code, newPassword) {
-  return new Promise((resolve, reject) => {
-    const user = new CognitoUser({ Username: email, Pool: userPool });
-    user.confirmPassword(code, newPassword, {
-      onSuccess: () => resolve(),
-      onFailure: (err) => reject(err),
-    });
-  });
-}
+export const confirmForgotPassword = async (email, code, newPassword) => {
+  return { success: true };
+};
