@@ -48,7 +48,6 @@ export class QuantumImageProcessorStack extends cdk.Stack {
 
     // DynamoDB Table
     this.metadataTable = new dynamodb.Table(this, 'MetadataTable', {
-      tableName: 'ImageMetadata',
       partitionKey: { name: 'imageKey', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       pointInTimeRecovery: true,

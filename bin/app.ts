@@ -9,7 +9,8 @@ import { SockMatcherAgentsStack } from '../lib/sock-matcher-agents-stack';
 const app = new cdk.App();
 new MainStack(app, 'MainStack');
 new QuantumImageProcessorStack(app, 'QuantumImageProcessorStack', {
-  env: { region: 'us-east-1' },
+  env: { region: 'us-west-2' },
+  cognitoUserPoolArn: 'arn:aws:cognito-idp:us-west-2:831926593673:userpool/us-west-2_R5d1sC0Tn',
 });
 new AIPasswordValidatorStack(app, 'AIPasswordValidatorStack', {});
 new SockMatcherAgentsStack(app, 'SockMatcherAgentsStack', {
