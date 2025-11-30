@@ -186,7 +186,7 @@
 - [ ] 17. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 18. Create demo data and documentation
+- [x] 18. Create demo data and documentation
   - Add sample socks for demo purposes
   - Create README with setup instructions
   - Document AWS infrastructure requirements
