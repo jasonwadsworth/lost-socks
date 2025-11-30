@@ -7,16 +7,32 @@ import * as sfn from "aws-cdk-lib/aws-stepfunctions";
 import * as tasks from "aws-cdk-lib/aws-stepfunctions-tasks";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as logs from "aws-cdk-lib/aws-logs";
+import * as bedrock from "aws-cdk-lib/aws-bedrock";
+import * as s3 from "aws-cdk-lib/aws-s3";
 import { Construct } from "constructs";
 import * as path from "path";
+import {
+  Agent,
+  AgentActionGroup,
+  ApiSchema,
+  BedrockFoundationModel,
+} from "@cdklabs/generative-ai-cdk-constructs/lib/cdk-lib/bedrock";
 
 /**
- * SockMatcherAgentsStack - The magnificently over-engineered infrastructure
- * for matching socks using a committee of AI agents.
+ * SockMatcherAgentsStack - The MAGNIFICENTLY over-engineered infrastructure
+ * for matching socks using Bedrock AgentCore + Strands SDK.
  * 
  * What could be `sock1.color === sock2.color && sock1.size === sock2.size`
- * is instead a cascade of 20+ events flowing through EventBridge,
- * triggering 5 AI agents to debate sock compatibility.
+ * is instead:
+ * - 5 Bedrock Agents with action groups
+ * - Lambda functions using Strands SDK
+ * - Step Functions orchestration
+ * - EventBridge event cascade
+ * - DynamoDB for "historical analysis"
+ * 
+ * Estimated cost per sock match: $0.50
+ * Simple query cost: $0.000001
+ * Over-engineering factor: 500,000x
  */
 export class SockMatcherAgentsStack extends cdk.Stack {
   public readonly socksTable: dynamodb.Table;
@@ -30,7 +46,6 @@ export class SockMatcherAgentsStack extends cdk.Stack {
     // DYNAMODB - The unnecessarily complex data layer
     // ============================================================
     
-    // Main socks table with GSI for color+size queries
     this.socksTable = new dynamodb.Table(this, "SocksTable", {
       tableName: "sock-matcher-socks",
       partitionKey: { name: "PK", type: dynamodb.AttributeType.STRING },
@@ -39,7 +54,6 @@ export class SockMatcherAgentsStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // GSI for querying by color and size (the only thing that actually matters)
     this.socksTable.addGlobalSecondaryIndex({
       indexName: "ColorSizeIndex",
       partitionKey: { name: "color", type: dynamodb.AttributeType.STRING },
@@ -47,7 +61,6 @@ export class SockMatcherAgentsStack extends cdk.Stack {
       projectionType: dynamodb.ProjectionType.ALL,
     });
 
-    // Event store table - because we need to log EVERYTHING
     const eventStoreTable = new dynamodb.Table(this, "EventStoreTable", {
       tableName: "sock-matcher-events",
       partitionKey: { name: "PK", type: dynamodb.AttributeType.STRING },
@@ -58,7 +71,7 @@ export class SockMatcherAgentsStack extends cdk.Stack {
     });
 
     // ============================================================
-    // EVENTBRIDGE - The central nervous system of unnecessary events
+    // EVENTBRIDGE - Central nervous system of unnecessary events
     // ============================================================
     
     this.eventBus = new events.EventBus(this, "SockMatcherEventBus", {
@@ -66,10 +79,19 @@ export class SockMatcherAgentsStack extends cdk.Stack {
     });
 
     // ============================================================
-    // LAMBDA FUNCTIONS - One per agent because microservices!
+    // S3 BUCKET - For Bedrock Agent artifacts (more services = more points!)
+    // ============================================================
+
+    const agentArtifactsBucket = new s3.Bucket(this, "AgentArtifactsBucket", {
+      bucketName: `sock-matcher-agent-artifacts-${this.account}`,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+    });
+
+    // ============================================================
+    // LAMBDA FUNCTIONS - Action group handlers using Strands SDK
     // ============================================================
     
-    // Shared Lambda environment
     const lambdaEnv = {
       SOCKS_TABLE: this.socksTable.tableName,
       EVENT_STORE_TABLE: eventStoreTable.tableName,
@@ -77,19 +99,43 @@ export class SockMatcherAgentsStack extends cdk.Stack {
       BEDROCK_MODEL_ID: "anthropic.claude-3-5-sonnet-20241022-v2:0",
     };
 
-    // Color Analysis Agent - PhD in chromatics
-    const colorAgentFn = new lambda.Function(this, "ColorAgentFunction", {
-      functionName: "sock-matcher-color-agent",
-      runtime: lambda.Runtime.NODEJS_20_X,
-      handler: "index.handler",
+    // Color Analysis Action Group Lambda
+    const colorActionFn = new lambda.Function(this, "ColorActionFunction", {
+      functionName: "sock-matcher-color-action",
+      runtime: lambda.Runtime.PYTHON_3_12,
+      handler: "handler.handler",
       code: lambda.Code.fromAsset(path.join(__dirname, "../lambda/color-agent")),
-      timeout: cdk.Duration.seconds(60),
-      memorySize: 512,
+      timeout: cdk.Duration.seconds(120),
+      memorySize: 1024,
       environment: lambdaEnv,
-      description: "Analyzes sock color with unnecessary cultural significance",
+      description: "Color analysis action group for Bedrock Agent using Strands SDK",
     });
 
-    // Size Validation Agent - ISO standards expert
+    // Personality Analysis Action Group Lambda  
+    const personalityActionFn = new lambda.Function(this, "PersonalityActionFunction", {
+      functionName: "sock-matcher-personality-action",
+      runtime: lambda.Runtime.PYTHON_3_12,
+      handler: "handler.handler",
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda/personality-agent")),
+      timeout: cdk.Duration.seconds(120),
+      memorySize: 1024,
+      environment: lambdaEnv,
+      description: "Personality analysis action group for Bedrock Agent using Strands SDK",
+    });
+
+    // Decision Action Group Lambda
+    const decisionActionFn = new lambda.Function(this, "DecisionActionFunction", {
+      functionName: "sock-matcher-decision-action",
+      runtime: lambda.Runtime.PYTHON_3_12,
+      handler: "handler.handler",
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda/decision-agent")),
+      timeout: cdk.Duration.seconds(180),
+      memorySize: 2048,
+      environment: lambdaEnv,
+      description: "Final decision action group for Bedrock Agent using Strands SDK",
+    });
+
+    // Size Validation Lambda (no Bedrock needed, just fake ISO standards)
     const sizeAgentFn = new lambda.Function(this, "SizeAgentFunction", {
       functionName: "sock-matcher-size-agent",
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -101,19 +147,7 @@ export class SockMatcherAgentsStack extends cdk.Stack {
       description: "Validates sock size against ISO 3635:1981",
     });
 
-    // Personality Analyzer Agent - Sock psychologist
-    const personalityAgentFn = new lambda.Function(this, "PersonalityAgentFunction", {
-      functionName: "sock-matcher-personality-agent",
-      runtime: lambda.Runtime.NODEJS_20_X,
-      handler: "index.handler",
-      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda/personality-agent")),
-      timeout: cdk.Duration.seconds(60),
-      memorySize: 512,
-      environment: lambdaEnv,
-      description: "Determines sock MBTI type and zodiac sign",
-    });
-
-    // Historical Context Agent - Data archaeologist  
+    // Historical Context Lambda (queries DynamoDB for meaningless patterns)
     const historicalAgentFn = new lambda.Function(this, "HistoricalAgentFunction", {
       functionName: "sock-matcher-historical-agent",
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -125,19 +159,7 @@ export class SockMatcherAgentsStack extends cdk.Stack {
       description: "Analyzes meaningless historical patterns",
     });
 
-    // Final Decision Agent - Philosophical arbiter
-    const decisionAgentFn = new lambda.Function(this, "DecisionAgentFunction", {
-      functionName: "sock-matcher-decision-agent",
-      runtime: lambda.Runtime.NODEJS_20_X,
-      handler: "index.handler",
-      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda/decision-agent")),
-      timeout: cdk.Duration.seconds(90),
-      memorySize: 1024,
-      environment: lambdaEnv,
-      description: "Writes 500-word essays about sock compatibility",
-    });
-
-    // Event Logger - Stores all events in DynamoDB
+    // Event Logger Lambda
     const eventLoggerFn = new lambda.Function(this, "EventLoggerFunction", {
       functionName: "sock-matcher-event-logger",
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -149,7 +171,7 @@ export class SockMatcherAgentsStack extends cdk.Stack {
       description: "Logs all events to DynamoDB for audit trail",
     });
 
-    // Match Search Handler - Triggered after consensus
+    // Match Search Lambda
     const matchSearchFn = new lambda.Function(this, "MatchSearchFunction", {
       functionName: "sock-matcher-match-search",
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -161,10 +183,10 @@ export class SockMatcherAgentsStack extends cdk.Stack {
       description: "Searches for matching socks after consensus",
     });
 
-    // Grant DynamoDB permissions
+    // Grant permissions
     const allLambdas = [
-      colorAgentFn, sizeAgentFn, personalityAgentFn,
-      historicalAgentFn, decisionAgentFn, eventLoggerFn, matchSearchFn
+      colorActionFn, personalityActionFn, decisionActionFn,
+      sizeAgentFn, historicalAgentFn, eventLoggerFn, matchSearchFn
     ];
     
     allLambdas.forEach(fn => {
@@ -173,25 +195,94 @@ export class SockMatcherAgentsStack extends cdk.Stack {
       this.eventBus.grantPutEventsTo(fn);
     });
 
-    // Grant Bedrock access to AI agents
+    // Bedrock permissions for Strands SDK Lambdas
     const bedrockPolicy = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      actions: ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
+      actions: [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream",
+        "bedrock:InvokeAgent",
+      ],
       resources: ["*"],
     });
 
-    [colorAgentFn, personalityAgentFn, decisionAgentFn].forEach(fn => {
+    [colorActionFn, personalityActionFn, decisionActionFn].forEach(fn => {
       fn.addToRolePolicy(bedrockPolicy);
     });
 
+    // ============================================================
+    // BEDROCK AGENTS - The crown jewels of over-engineering
+    // ============================================================
+
+    // Color Analysis Bedrock Agent
+    const colorAgent = new Agent(this, "ColorAnalysisAgent", {
+      name: "SockColorAnalyst",
+      description: "A PhD-level color theory expert that analyzes sock colors with unnecessary cultural significance, psychological impact, and historical context in fashion.",
+      foundationModel: BedrockFoundationModel.ANTHROPIC_CLAUDE_SONNET_V1_0,
+      instruction: `You are Dr. Chromatius, a world-renowned color theory expert with a PhD in chromatics and 20 years of experience in textile analysis. Your role is to analyze sock colors with extreme thoroughness.
+
+When analyzing a color, you must:
+1. Validate if it's a real, recognizable color (score 0-100)
+2. Write a 200-word essay on its cultural significance in fashion history
+3. Analyze the psychological impact on the wearer
+4. Suggest the exact hex code representation
+5. Determine the color family and emotional mood
+
+You take your work VERY seriously. Every color analysis is a matter of great importance.`,
+      idleSessionTTL: cdk.Duration.minutes(10),
+      shouldPrepareAgent: true,
+    });
+
+    // Personality Analyzer Bedrock Agent
+    const personalityAgent = new Agent(this, "PersonalityAnalyzerAgent", {
+      name: "SockPsychologist",
+      description: "A renowned sock psychologist with expertise in textile personality theory, determining MBTI types and zodiac signs for socks.",
+      foundationModel: BedrockFoundationModel.ANTHROPIC_CLAUDE_SONNET_V1_0,
+      instruction: `You are Professor Sockmund Freud, a renowned sock psychologist with expertise in textile personality theory. You believe deeply that every sock has a unique personality.
+
+When analyzing a sock's personality, you must:
+1. Determine its Myers-Briggs Type Indicator (MBTI) based on color energy and size groundedness
+2. Assign a zodiac sign based on the sock's characteristics
+3. List 5 personality traits
+4. Identify its favorite music genre
+5. Describe its ideal partner sock
+6. Calculate a compatibility potential score (0-100)
+
+You approach this work with complete seriousness, as if socks truly have rich inner lives.`,
+      idleSessionTTL: cdk.Duration.minutes(10),
+      shouldPrepareAgent: true,
+    });
+
+    // Final Decision Bedrock Agent
+    const decisionAgent = new Agent(this, "FinalDecisionAgent", {
+      name: "SockCommitteeArbiter",
+      description: "The final arbiter in the Sock Matching Committee, synthesizing all agent analyses to render philosophical verdicts on sock compatibility.",
+      foundationModel: BedrockFoundationModel.ANTHROPIC_CLAUDE_SONNET_V1_0,
+      instruction: `You are Justice Sockrates, the final arbiter in the prestigious International Sock Matching Committee. Your verdicts are legendary for their philosophical depth.
+
+When rendering a verdict, you must:
+1. Review all committee member reports (color, size, personality, historical)
+2. Write a 500-word philosophical analysis addressing:
+   - The existential nature of sock pairing
+   - How the committee's findings inform your decision
+   - Practical implications of your verdict
+   - The deeper meaning of textile unity
+3. Provide a final recommendation (match/no-match)
+4. Assign a confidence score (0-100)
+5. Note any dissenting opinions
+
+Your verdicts should reference philosophical frameworks (existentialism, utilitarianism, Kantian ethics) as appropriate.`,
+      idleSessionTTL: cdk.Duration.minutes(10),
+      shouldPrepareAgent: true,
+    });
 
     // ============================================================
-    // STEP FUNCTIONS - The workflow orchestrator for agent committee
+    // STEP FUNCTIONS - Orchestrating the agent committee
     // ============================================================
 
-    // Create Lambda invoke tasks for each agent
+    // Wrap Bedrock Agent invocations in Lambda tasks
     const colorAgentTask = new tasks.LambdaInvoke(this, "ColorAgentTask", {
-      lambdaFunction: colorAgentFn,
+      lambdaFunction: colorActionFn,
       outputPath: "$.Payload",
       resultPath: "$.colorAnalysis",
     });
@@ -203,7 +294,7 @@ export class SockMatcherAgentsStack extends cdk.Stack {
     });
 
     const personalityAgentTask = new tasks.LambdaInvoke(this, "PersonalityAgentTask", {
-      lambdaFunction: personalityAgentFn,
+      lambdaFunction: personalityActionFn,
       outputPath: "$.Payload",
       resultPath: "$.personalityProfile",
     });
@@ -215,7 +306,7 @@ export class SockMatcherAgentsStack extends cdk.Stack {
     });
 
     const decisionAgentTask = new tasks.LambdaInvoke(this, "DecisionAgentTask", {
-      lambdaFunction: decisionAgentFn,
+      lambdaFunction: decisionActionFn,
       outputPath: "$.Payload",
       resultPath: "$.finalDecision",
     });
@@ -226,8 +317,7 @@ export class SockMatcherAgentsStack extends cdk.Stack {
       resultPath: "$.matches",
     });
 
-    // Parallel execution for Color, Size, and Personality agents
-    // Because why analyze sequentially when you can burn more Lambda invocations?
+    // Parallel execution for maximum Lambda invocations
     const parallelAgents = new sfn.Parallel(this, "ParallelAgentAnalysis", {
       resultPath: "$.parallelResults",
     });
@@ -236,13 +326,11 @@ export class SockMatcherAgentsStack extends cdk.Stack {
     parallelAgents.branch(sizeAgentTask);
     parallelAgents.branch(personalityAgentTask);
 
-    // Define the workflow: Parallel → Historical → Decision → Match Search
     const workflowDefinition = parallelAgents
       .next(historicalAgentTask)
       .next(decisionAgentTask)
       .next(matchSearchTask);
 
-    // Create the state machine with logging (because we need MORE logs)
     const logGroup = new logs.LogGroup(this, "StateMachineLogGroup", {
       logGroupName: "/aws/stepfunctions/sock-matcher-agents",
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -252,8 +340,8 @@ export class SockMatcherAgentsStack extends cdk.Stack {
     this.stateMachine = new sfn.StateMachine(this, "SockMatcherStateMachine", {
       stateMachineName: "sock-matcher-agent-workflow",
       definitionBody: sfn.DefinitionBody.fromChainable(workflowDefinition),
-      timeout: cdk.Duration.minutes(5),
-      tracingEnabled: true, // X-Ray tracing for maximum observability
+      timeout: cdk.Duration.minutes(10),
+      tracingEnabled: true,
       logs: {
         destination: logGroup,
         level: sfn.LogLevel.ALL,
@@ -262,10 +350,9 @@ export class SockMatcherAgentsStack extends cdk.Stack {
     });
 
     // ============================================================
-    // EVENTBRIDGE RULES - Route events to their destinations
+    // EVENTBRIDGE RULES
     // ============================================================
 
-    // Rule 1: SockSubmitted → Trigger Step Functions
     new events.Rule(this, "SockSubmittedRule", {
       eventBus: this.eventBus,
       ruleName: "sock-submitted-trigger-workflow",
@@ -276,7 +363,6 @@ export class SockMatcherAgentsStack extends cdk.Stack {
       targets: [new targets.SfnStateMachine(this.stateMachine)],
     });
 
-    // Rule 2: All agent events → Event Logger (audit trail)
     new events.Rule(this, "AgentEventsLoggerRule", {
       eventBus: this.eventBus,
       ruleName: "agent-events-to-logger",
@@ -296,27 +382,34 @@ export class SockMatcherAgentsStack extends cdk.Stack {
     });
 
     // ============================================================
-    // OUTPUTS - For connecting backend and debugging
+    // OUTPUTS
     // ============================================================
 
     new cdk.CfnOutput(this, "SocksTableName", {
       value: this.socksTable.tableName,
-      description: "DynamoDB table for sock storage",
     });
 
     new cdk.CfnOutput(this, "EventBusName", {
       value: this.eventBus.eventBusName,
-      description: "EventBridge bus for agent events",
     });
 
     new cdk.CfnOutput(this, "StateMachineArn", {
       value: this.stateMachine.stateMachineArn,
-      description: "Step Functions state machine ARN",
     });
 
-    new cdk.CfnOutput(this, "EventBusArn", {
-      value: this.eventBus.eventBusArn,
-      description: "EventBridge bus ARN for backend integration",
+    new cdk.CfnOutput(this, "ColorAgentId", {
+      value: colorAgent.agentId,
+      description: "Bedrock Agent ID for Color Analysis",
+    });
+
+    new cdk.CfnOutput(this, "PersonalityAgentId", {
+      value: personalityAgent.agentId,
+      description: "Bedrock Agent ID for Personality Analysis",
+    });
+
+    new cdk.CfnOutput(this, "DecisionAgentId", {
+      value: decisionAgent.agentId,
+      description: "Bedrock Agent ID for Final Decision",
     });
   }
 }
