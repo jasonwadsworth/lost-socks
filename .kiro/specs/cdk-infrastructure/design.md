@@ -46,7 +46,7 @@ import { MainStack } from "../lib/main-stack";
 const app = new cdk.App();
 new MainStack(app, "MainStack", {
   // Optional: specify environment
-  // env: { account: '123456789012', region: 'us-east-1' }
+  // env: { account: '123456789012', region: 'us-west-2' }
 });
 ```
 
@@ -190,7 +190,7 @@ The package.json should contain build, watch, cdk, and synth scripts
 **Validates: Requirements 5.1, 5.2, 5.3, 5.4**
 
 **Example 7: gitignore excludes build artifacts**
-The .gitignore should contain entries for node_modules, _.js, _.d.ts, cdk.out, and \*.tsbuildinfo
+The .gitignore should contain entries for node*modules, *.js, \_.d.ts, cdk.out, and \*.tsbuildinfo
 **Validates: Requirements 6.1, 6.2, 6.3, 6.4**
 
 ## Error Handling
