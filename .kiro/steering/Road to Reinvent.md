@@ -2,7 +2,7 @@
    Road to Reinvent Hackathon - Steering Rules
    Challenge: Build the most useless application in the least practical way
    Total Points: 100 (Impracticality: 40, Pointless: 35, Entertainment: 25)
-------------------------------------------------------------------------------------> 
+------------------------------------------------------------------------------------>
 
 # Road to Reinvent Hackathon Guidelines
 
@@ -55,6 +55,7 @@
 - Include proper error handling for edge cases that will never happen
 - Use design patterns inappropriately (Singleton for everything, Factory for primitives)
 - Comment code as if it's solving a critical business problem
+- **DO NOT write tests** - we're on a tight hackathon timeline, skip all test files
 
 ### Project Structure
 - Over-organize with excessive folders and modules
