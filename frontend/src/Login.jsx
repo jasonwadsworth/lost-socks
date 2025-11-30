@@ -108,8 +108,8 @@ function Login({ onNavigate }) {
                 <div className="sock-icon-pair">🧦</div>
                 <div className="sparkle">✨</div>
               </div>
-              <h1 className="brand-title">Lost Socks!</h1>
-              <p className="brand-tagline">Never lose a sock again!</p>
+              <h1 className="brand-title">Sole Mates!</h1>
+              <p className="brand-tagline">Every sock deserves its pair 💕</p>
             </div>
           </div>
           

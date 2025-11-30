@@ -128,7 +128,7 @@ function Upload({ onNavigate }) {
           ← Logout
         </button>
 
-        <h1 className="upload-title">Upload Your Lost Sock! 📸</h1>
+        <h1 className="upload-title">Find Your Sole Mate! 📸</h1>
         <p className="upload-subtitle">Our AI Agent Committee will analyze your sock's deepest characteristics</p>
 
         {uploadError && <div className="error-message">{uploadError}</div>}
