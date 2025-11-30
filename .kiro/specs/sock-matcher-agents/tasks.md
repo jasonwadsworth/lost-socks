@@ -66,7 +66,7 @@
   - **Property 5: Agent consensus requirement**
   - **Validates: Requirements 6.3**
 
-- [ ] 6. Implement backend API endpoints with Express
+- [x] 6. Implement backend API endpoints with Express
   - Create Express server with CORS and body parsing
   - Implement POST /api/socks endpoint to publish SockSubmitted event to EventBridge
   - Implement GET /api/socks/:id/status endpoint for polling Step Functions execution
@@ -109,7 +109,7 @@
   - Show error messages for failed submissions
   - _Requirements: 8.1, 8.2_
 
-- [ ] 10. Implement frontend AgentProgressTracker component
+- [x] 10. Implement frontend AgentProgressTracker component
   - Create component to display 5 agent progress indicators
   - Connect to WebSocket for real-time updates
   - Show which agent is currently "thinking"
@@ -128,7 +128,7 @@
   - Handle empty match list with appropriate message
   - _Requirements: 3.1, 3.2, 3.3_
 
-- [ ] 12. Integrate frontend with real backend API
+- [x] 12. Integrate frontend with real backend API
   - Update Upload.jsx to call POST /api/socks endpoint
   - Update Matches.jsx to call GET /api/socks/:id/matches endpoint
   - Implement WebSocket connection for real-time agent updates
