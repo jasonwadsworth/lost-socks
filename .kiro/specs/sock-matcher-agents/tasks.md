@@ -84,7 +84,7 @@
   - Test error cases (invalid input, not found, timeouts)
   - _Requirements: 1.1, 3.1_
 
-- [ ] 7. Implement WebSocket real-time updates
+- [x] 7. Implement WebSocket real-time updates
   - Set up Socket.io server integration with Express
   - Subscribe to EventBridge agent events via Lambda → WebSocket broadcaster
   - Emit agent:started events when agents begin
@@ -140,7 +140,7 @@
   - **Property 4: Match filtering with agent reasoning**
   - **Validates: Requirements 3.1, 3.2**
 
-- [ ] 13. Implement frontend AgentTranscript component
+- [x] 13. Implement frontend AgentTranscript component
   - Create expandable panel for full agent deliberation
   - Display each agent's reasoning process
   - Show timestamps and token usage per agent

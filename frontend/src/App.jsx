@@ -7,9 +7,11 @@ import Matches from './Matches';
 function App() {
   const [showIntro, setShowIntro] = useState(true);
   const [currentPage, setCurrentPage] = useState('login');
+  const [pageData, setPageData] = useState({});
 
-  const handleNavigate = (page) => {
+  const handleNavigate = (page, data = {}) => {
     setCurrentPage(page);
+    setPageData(data);
   };
 
   const handleIntroComplete = () => {
@@ -24,7 +26,7 @@ function App() {
     <>
       {currentPage === 'login' && <Login onNavigate={handleNavigate} />}
       {currentPage === 'upload' && <Upload onNavigate={handleNavigate} />}
-      {currentPage === 'matches' && <Matches onNavigate={handleNavigate} />}
+      {currentPage === 'matches' && <Matches onNavigate={handleNavigate} sockId={pageData.sockId} />}
     </>
   );
 }

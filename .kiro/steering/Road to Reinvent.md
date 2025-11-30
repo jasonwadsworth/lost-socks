@@ -92,4 +92,40 @@
 
 ---
 
+## 🎯 JUDGE-SPECIFIC STRATEGY
+
+### Known Judges: Swami Sivasubramanian & Jeff Barr
+
+#### For Swami (VP of AI/ML at AWS)
+- **Maximize AI/ML buzzwords**: Multi-agent orchestration, consensus algorithms, personality embeddings
+- **Show Bedrock integration**: Multiple foundation models working together for trivial decisions
+- **Agent architecture**: Demonstrate sophisticated agent-to-agent communication patterns
+- **Highlight the absurdity**: 5 AI agents with PhDs deliberating on sock colors
+- **Cost transparency**: Show the ridiculous per-request cost vs a simple if/else
+
+#### For Jeff Barr (Chief Evangelist)
+- **AWS service bingo**: Use as many AWS services as possible in one diagram
+- **Event-driven everything**: EventBridge, Step Functions, Lambda, DynamoDB streams
+- **Serverless showcase**: Demonstrate serverless patterns taken to absurd extremes
+- **Architecture diagram porn**: Create the most complex, beautiful diagram possible
+- **Blog-worthy moments**: Give him something he'd want to write about
+
+### Architecture Diagram Requirements
+- Must include at least 15 AWS service icons
+- Show data flow with multiple paths and decision points
+- Include "AI Agent Committee" as a central orchestration layer
+- Add unnecessary caching layers, queues, and event buses
+- Show real-time WebSocket connections for "live deliberation updates"
+- Include cost annotations showing the magnificent waste
+- Make it look like enterprise architecture for a sock drawer
+
+### Demo Talking Points for Judges
+1. "We use 5 specialized AI agents because matching socks is too complex for a single model"
+2. "The ISO 3635:1981 compliance check ensures international sock standards"
+3. "Our Monte Carlo simulation predicts match success with 94.7% confidence"
+4. "The event-driven architecture publishes 20+ events per sock submission"
+5. "Total cost per match: $0.15 (vs $0.000001 for color === color)"
+
+---
+
 **Remember**: The goal is to be brilliantly stupid, not just stupid. Show off your technical chops while solving absolutely nothing of value.
