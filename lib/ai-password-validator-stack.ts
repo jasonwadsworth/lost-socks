@@ -12,15 +12,10 @@ export class AIPasswordValidatorStack extends cdk.Stack {
         const preSignUpLambda = new lambda.Function(this, 'PreSignUpFunction', {
             runtime: lambda.Runtime.NODEJS_20_X,
             handler: 'index.handler',
-            code: lambda.Code.fromAsset('lambda', {
+            code: lambda.Code.fromAsset('lambda/dist', {
                 exclude: [
-                    'node_modules',
                     '*.ts',
-                    'tsconfig.json',
-                    'jest.config.js',
-                    'test',
-                    '*.test.js',
-                    '*.test.d.ts',
+                    '*.map',
                 ],
             }),
             timeout: cdk.Duration.seconds(30),
