@@ -1,0 +1,10 @@
+{
+  "name": "sock-matcher-size-agent",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Size Validation Agent - ISO Standards Expert",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-eventbridge": "^3.0.0"
+  }
+}
