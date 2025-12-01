@@ -4,6 +4,7 @@ import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as lambdaNodejs from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import * as events from 'aws-cdk-lib/aws-events';
@@ -136,11 +137,24 @@ export class QuantumImageProcessorStack extends cdk.Stack {
       code: lambda.Code.fromAsset(path.join(__dirname, '../backend/src/lambda/quantum-processor/archive')),
     });
 
-    // Pre-signed URL Lambda
-    const getUploadUrlLambda = new lambda.Function(this, 'GetUploadUrlLambda', {
-      ...lambdaDefaults,
-      handler: 'index.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../backend/src/lambda/quantum-processor/get-upload-url')),
+    // Pre-signed URL Lambda (using NodejsFunction for automatic bundling)
+    const getUploadUrlLambda = new lambdaNodejs.NodejsFunction(this, 'GetUploadUrlLambda', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 512,
+      entry: path.join(__dirname, '../backend/src/lambda/quantum-processor/get-upload-url/index.ts'),
+      handler: 'handler',
+      environment: {
+        METADATA_TABLE: this.metadataTable.tableName,
+        UPLOAD_BUCKET: uploadBucket.bucketName,
+        ARCHIVE_BUCKET: archiveBucket.bucketName,
+      },
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        externalModules: [],
+      },
     });
 
     // Grant permissions
