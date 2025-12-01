@@ -1,101 +1,59 @@
-import {
-  CognitoUserPool,
-  CognitoUser,
-  AuthenticationDetails,
-  CognitoUserAttribute,
-} from "amazon-cognito-identity-js";
-
-const poolData = {
-  UserPoolId: "us-west-2_R5d1sC0Tn",
-  ClientId: "5rur5867brbqbp3toof7rfi8ko",
-};
-
-const userPool = new CognitoUserPool(poolData);
+// Mock authentication - no real network calls
+// All auth functions now work offline with mock data
 
 export function signUp(email, password) {
-  return new Promise((resolve, reject) => {
-    const attributeList = [
-      new CognitoUserAttribute({ Name: "email", Value: email }),
-    ];
-
-    const validationData = [
-      new CognitoUserAttribute({ Name: "password", Value: password }),
-    ];
-
-    userPool.signUp(
-      email,
-      password,
-      attributeList,
-      validationData,
-      (err, result) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve(result);
-      }
-    );
+  return new Promise((resolve) => {
+    // Simulate network delay
+    setTimeout(() => {
+      console.log("Mock signup:", email);
+      resolve({ user: { username: email } });
+    }, 500);
   });
 }
 
 export function confirmSignUp(email, code) {
-  return new Promise((resolve, reject) => {
-    const user = new CognitoUser({ Username: email, Pool: userPool });
-    user.confirmRegistration(code, true, (err, result) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(result);
-    });
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log("Mock confirm signup:", email, code);
+      resolve({ success: true });
+    }, 500);
   });
 }
 
 export function signIn(email, password) {
-  return new Promise((resolve, reject) => {
-    const user = new CognitoUser({ Username: email, Pool: userPool });
-    const authDetails = new AuthenticationDetails({
-      Username: email,
-      Password: password,
-    });
-
-    user.authenticateUser(authDetails, {
-      onSuccess: (result) => {
-        const idToken = result.getIdToken().getJwtToken();
-        sessionStorage.setItem("idToken", idToken);
-        resolve({ idToken });
-      },
-      onFailure: (err) => reject(err),
-    });
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log("Mock sign in:", email);
+      const mockToken = "mock-jwt-token-" + Date.now();
+      sessionStorage.setItem("idToken", mockToken);
+      resolve({ idToken: mockToken });
+    }, 500);
   });
 }
 
 export function getIdToken() {
-  return sessionStorage.getItem("idToken");
+  return sessionStorage.getItem("idToken") || "mock-token";
 }
 
 export function signOut() {
   sessionStorage.removeItem("idToken");
-  const user = userPool.getCurrentUser();
-  if (user) user.signOut();
+  console.log("Mock sign out");
 }
 
 export function forgotPassword(email) {
-  return new Promise((resolve, reject) => {
-    const user = new CognitoUser({ Username: email, Pool: userPool });
-    user.forgotPassword({
-      onSuccess: () => resolve(),
-      onFailure: (err) => reject(err),
-    });
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log("Mock forgot password:", email);
+      resolve({ success: true });
+    }, 500);
   });
 }
 
 export function confirmForgotPassword(email, code, newPassword) {
-  return new Promise((resolve, reject) => {
-    const user = new CognitoUser({ Username: email, Pool: userPool });
-    user.confirmPassword(code, newPassword, {
-      onSuccess: () => resolve(),
-      onFailure: (err) => reject(err),
-    });
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log("Mock confirm forgot password:", email, code);
+      resolve({ success: true });
+    }, 500);
   });
 }

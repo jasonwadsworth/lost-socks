@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import AgentTranscript from "./AgentTranscript";
 import "./Matches.css";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
-
 function Matches({ onNavigate, sockId }) {
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,31 +15,75 @@ function Matches({ onNavigate, sockId }) {
       return;
     }
 
-    const fetchResults = async () => {
-      try {
-        // Fetch matches and agent deliberation
-        const [matchRes, transcriptRes] = await Promise.all([
-          fetch(`${BACKEND_URL}/api/socks/${sockId}/matches`),
-          fetch(`${BACKEND_URL}/api/socks/${sockId}/transcript`),
-        ]);
+    // Mock data - no real network calls
+    setTimeout(() => {
+      // Mock match data
+      const mockMatchData = {
+        matches: [
+          { id: 1, color: "Blue", size: "Medium", compatibilityScore: 98 },
+          { id: 2, color: "Navy", size: "Medium", compatibilityScore: 87 },
+          { id: 3, color: "Azure", size: "Large", compatibilityScore: 76 },
+          { id: 4, color: "Cerulean", size: "Small", compatibilityScore: 65 },
+        ],
+        deliberationSummary:
+          "After extensive deliberation involving 5 specialized AI agents, the committee has reached unanimous consensus. Dr. Chromatius confirmed the azure hue, ISO Expert validated size compliance, Prof. Sockmund Freud identified ENFP personality traits, Data Archaeologist ran 10,000 Monte Carlo simulations, and Justice Sockrates synthesized all findings.",
+        processingTime: 12847,
+        estimatedCost: "$0.0224",
+        agentVotes: ["color", "size", "personality", "historical", "decision"],
+      };
 
-        if (matchRes.ok) {
-          const data = await matchRes.json();
-          setMatchData(data);
-        }
+      // Mock transcript data
+      const mockTranscript = {
+        transcript: [
+          {
+            agent: "ColorAnalysisAgent",
+            analysis:
+              "Chromatic analysis complete. Wavelength: 475nm (azure). Cultural significance: Associated with trust and stability. Recommendation: Match with similar cool tones.",
+            tokenUsage: 1247,
+            cost: 0.003741,
+            timestamp: new Date(Date.now() - 12000).toISOString(),
+          },
+          {
+            agent: "SizeValidationAgent",
+            analysis:
+              "ISO 3635:1981 compliance verified. Classification: Medium (EU 39-42). Elasticity coefficient: 0.87. Recommendation: Match within ±1 size category.",
+            tokenUsage: 892,
+            cost: 0.002676,
+            timestamp: new Date(Date.now() - 9500).toISOString(),
+          },
+          {
+            agent: "PersonalityAnalyzerAgent",
+            analysis:
+              "MBTI Assessment: ENFP (The Campaigner). Zodiac: Sagittarius. Emotional state: Optimistically lonely. Compatibility factors: Seeks adventure, values authenticity. Recommendation: Match with complementary or similar personality.",
+            tokenUsage: 1534,
+            cost: 0.004602,
+            timestamp: new Date(Date.now() - 7000).toISOString(),
+          },
+          {
+            agent: "HistoricalContextAgent",
+            analysis:
+              "Monte Carlo simulation (n=10,000) complete. Historical match success rate: 94.7% ±2.3%. Pattern analysis: Striped socks show 23% higher compatibility. Recommendation: Prioritize pattern similarity.",
+            tokenUsage: 2103,
+            cost: 0.006309,
+            timestamp: new Date(Date.now() - 4500).toISOString(),
+          },
+          {
+            agent: "FinalDecisionAgent",
+            analysis:
+              'Committee synthesis complete. All agents in consensus. Final verdict: Proceed with top 4 matches. Confidence level: 97.2%. Philosophical note: "The unmatched sock is not lost, merely waiting for its destined pair." - Sockrates',
+            tokenUsage: 1678,
+            cost: 0.005034,
+            timestamp: new Date(Date.now() - 2000).toISOString(),
+          },
+        ],
+        totalTokens: 7454,
+        totalCost: 0.022362,
+      };
 
-        if (transcriptRes.ok) {
-          const data = await transcriptRes.json();
-          setTranscript(data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch results:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchResults();
+      setMatchData(mockMatchData);
+      setTranscript(mockTranscript);
+      setLoading(false);
+    }, 1000);
   }, [sockId]);
 
   // Generate display matches from real data or fallback

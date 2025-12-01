@@ -153,7 +153,6 @@ export class QuantumImageProcessorStack extends cdk.Stack {
       bundling: {
         minify: true,
         sourceMap: false,
-        externalModules: [],
       },
     });
 

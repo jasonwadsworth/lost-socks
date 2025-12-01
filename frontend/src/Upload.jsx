@@ -1,31 +1,27 @@
-import { useState } from 'react';
-import { getIdToken, signOut } from './auth';
-import AgentProgressTracker from './AgentProgressTracker';
-import { config } from './config';
-import './Upload.css';
-
-const API_URL = 'https://acs95drvib.execute-api.us-west-2.amazonaws.com/prod';
-const BACKEND_URL = config.BACKEND_URL;
+import { useState } from "react";
+import { signOut } from "./auth";
+import AgentProgressTracker from "./AgentProgressTracker";
+import "./Upload.css";
 
 function Upload({ onNavigate }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
-  const [uploadError, setUploadError] = useState('');
+  const [uploadError, setUploadError] = useState("");
   const [sockId, setSockId] = useState(null);
   const [showAgentTracker, setShowAgentTracker] = useState(false);
   const [sockDetails, setSockDetails] = useState({
-    color: '',
-    pattern: '',
-    size: '',
-    mood: ''
+    color: "",
+    pattern: "",
+    size: "",
+    mood: "",
   });
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setSelectedFile(file);
-      setUploadError('');
+      setUploadError("");
       const reader = new FileReader();
       reader.onloadend = () => setPreview(reader.result);
       reader.readAsDataURL(file);
@@ -34,93 +30,67 @@ function Upload({ onNavigate }) {
 
   const handleAnalyze = async () => {
     setAnalyzing(true);
-    setUploadError('');
+    setUploadError("");
 
-    try {
-      const token = getIdToken();
-      if (!token) {
-        signOut();
-        onNavigate('login');
-        return;
-      }
-
-      // Get pre-signed URL and upload image
-      const res = await fetch(`${API_URL}/upload-url`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (res.status === 401) {
-        signOut();
-        onNavigate('login');
-        return;
-      }
-
-      if (!res.ok) throw new Error('Failed to get upload URL');
-
-      const { uploadUrl } = await res.json();
-
-      const uploadRes = await fetch(uploadUrl, {
-        method: 'PUT',
-        body: selectedFile,
-        headers: { 'Content-Type': selectedFile.type }
-      });
-
-      if (!uploadRes.ok) throw new Error('Upload failed');
-
+    // Mock upload - no real network calls
+    setTimeout(() => {
       // Generate random sock attributes for the AI committee to analyze
-      const colors = ['blue', 'red', 'green', 'black', 'white', 'gray', 'navy', 'purple'];
-      const sizes = ['small', 'medium', 'large'];
+      const colors = [
+        "blue",
+        "red",
+        "green",
+        "black",
+        "white",
+        "gray",
+        "navy",
+        "purple",
+      ];
+      const sizes = ["small", "medium", "large"];
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
       const randomSize = sizes[Math.floor(Math.random() * sizes.length)];
 
-      // Submit sock to backend - triggers the AI agent committee!
-      const sockRes = await fetch(`${BACKEND_URL}/api/socks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ color: randomColor, size: randomSize }),
-      });
-
-      if (!sockRes.ok) throw new Error('Failed to submit sock for analysis');
-
-      const sockData = await sockRes.json();
-      setSockId(sockData.id);
+      // Mock sock ID
+      const mockSockId = "sock-" + Date.now();
+      setSockId(mockSockId);
       setShowAgentTracker(true);
       setAnalyzing(false);
 
       // Set initial sock details
       setSockDetails({
         color: randomColor.charAt(0).toUpperCase() + randomColor.slice(1),
-        pattern: ['Striped', 'Polka Dot', 'Argyle', 'Plain but Fancy'][Math.floor(Math.random() * 4)],
+        pattern: ["Striped", "Polka Dot", "Argyle", "Plain but Fancy"][
+          Math.floor(Math.random() * 4)
+        ],
         size: randomSize.charAt(0).toUpperCase() + randomSize.slice(1),
-        mood: ['Lonely', 'Adventurous', 'Melancholic', 'Optimistic'][Math.floor(Math.random() * 4)]
+        mood: ["Lonely", "Adventurous", "Melancholic", "Optimistic"][
+          Math.floor(Math.random() * 4)
+        ],
       });
-
-    } catch (err) {
-      setUploadError(err.message);
-      setAnalyzing(false);
-    }
+    }, 1000);
   };
 
   const handleAgentComplete = () => {
     // Agents finished deliberating
-    console.log('Agent committee has reached consensus!');
+    console.log("Agent committee has reached consensus!");
   };
 
   const handleFindMatch = () => {
     // Pass sockId to matches page
-    onNavigate('matches', { sockId });
+    onNavigate("matches", { sockId });
   };
 
   const handleLogout = () => {
     signOut();
-    onNavigate('login');
+    onNavigate("login");
   };
 
   return (
     <div className="upload-container">
       <div className="background-animation">
         {[...Array(50)].map((_, i) => (
-          <div key={i} className="floating-sock">🧦</div>
+          <div key={i} className="floating-sock">
+            🧦
+          </div>
         ))}
       </div>
 
@@ -130,16 +100,29 @@ function Upload({ onNavigate }) {
         </button>
 
         <h1 className="upload-title">Find Your Sole Mate! 📸</h1>
-        <p className="upload-subtitle">Our AI Agent Committee will analyze your sock's deepest characteristics</p>
+        <p className="upload-subtitle">
+          Our AI Agent Committee will analyze your sock's deepest
+          characteristics
+        </p>
 
         {uploadError && <div className="error-message">{uploadError}</div>}
 
         <div className="upload-section">
           <div className="upload-zone">
-            <input type="file" id="file-input" accept="image/*" onChange={handleFileChange} className="file-input" />
+            <input
+              type="file"
+              id="file-input"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="file-input"
+            />
             <label htmlFor="file-input" className="file-label">
               {preview ? (
-                <img src={preview} alt="Sock preview" className="preview-image" />
+                <img
+                  src={preview}
+                  alt="Sock preview"
+                  className="preview-image"
+                />
               ) : (
                 <div className="upload-placeholder">
                   <div className="upload-icon">🧦</div>
@@ -161,24 +144,40 @@ function Upload({ onNavigate }) {
             <div className="analyzing">
               <div className="spinner">🧦</div>
               <p>Uploading sock and summoning agents...</p>
-              <div className="progress-bar"><div className="progress-fill"></div></div>
+              <div className="progress-bar">
+                <div className="progress-fill"></div>
+              </div>
             </div>
           )}
 
           {showAgentTracker && sockId && (
             <>
-              <AgentProgressTracker 
-                sockId={sockId} 
+              <AgentProgressTracker
+                sockId={sockId}
                 onComplete={handleAgentComplete}
               />
-              
+
               <div className="sock-analysis">
                 <h3>Sock Profile 🧦</h3>
                 <div className="analysis-grid">
-                  <div className="analysis-item"><span className="analysis-label">Color:</span><span className="analysis-value">{sockDetails.color}</span></div>
-                  <div className="analysis-item"><span className="analysis-label">Pattern:</span><span className="analysis-value">{sockDetails.pattern}</span></div>
-                  <div className="analysis-item"><span className="analysis-label">Size:</span><span className="analysis-value">{sockDetails.size}</span></div>
-                  <div className="analysis-item"><span className="analysis-label">Emotional State:</span><span className="analysis-value">{sockDetails.mood}</span></div>
+                  <div className="analysis-item">
+                    <span className="analysis-label">Color:</span>
+                    <span className="analysis-value">{sockDetails.color}</span>
+                  </div>
+                  <div className="analysis-item">
+                    <span className="analysis-label">Pattern:</span>
+                    <span className="analysis-value">
+                      {sockDetails.pattern}
+                    </span>
+                  </div>
+                  <div className="analysis-item">
+                    <span className="analysis-label">Size:</span>
+                    <span className="analysis-value">{sockDetails.size}</span>
+                  </div>
+                  <div className="analysis-item">
+                    <span className="analysis-label">Emotional State:</span>
+                    <span className="analysis-value">{sockDetails.mood}</span>
+                  </div>
                 </div>
                 <button className="find-match-button" onClick={handleFindMatch}>
                   <span>Find My Sock's Soulmate!</span>
